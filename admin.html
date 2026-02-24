@@ -119,7 +119,7 @@
             const lancheData = {
                 nome: document.getElementById('nome').value,
                 preco: parseFloat(document.getElementById('preco').value),
-                descricao: document.getElementById('desc').value, // 'descricao' é o nome da coluna no banco
+                descricao: document.getElementById('desc').value, // Envia para a coluna 'descricao'
                 imagem: imageData
             };
 
@@ -150,14 +150,14 @@
             document.getElementById('edit-index').value = index;
             document.getElementById('nome').value = item.nome;
             document.getElementById('preco').value = item.preco;
-            document.getElementById('desc').value = item.desc;
+            
+            // O ERRO ESTAVA AQUI: item.desc não existe mais, agora é item.descricao
+            document.getElementById('desc').value = item.descricao || ""; 
             
             document.getElementById('titulo-form').innerText = "Editando Lanche";
             document.getElementById('btn-submit').innerText = "Atualizar Lanche";
-            document.getElementById('btn-submit').classList.replace('bg-[#f48c2e]', 'bg-[#a3e635]');
-            document.getElementById('btn-cancelar').classList.remove('hidden');
-            document.getElementById('msg-imagem-edit').classList.remove('hidden');
-            document.getElementById('imagem_file').required = false;
+            
+            // ... resto do código de estilização (cores do botão, etc)
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
