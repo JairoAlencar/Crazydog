@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <link rel="icon" href="logo-sem-fundo.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrazyDog - Painel Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
+        body { background-color: var(--bg-dark); color: white; }
+        .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-black uppercase italic text-[#f48c2e]">Gestão de Cardápio</h1>
+            <div class="flex items-center gap-4">
+                <a href="index.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">Ver Site</a>
+                <button onclick="logout()" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg font-bold transition-colors">Sair</button>
+            </div>
+        </header>
+
+        <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
+            <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6">Cadastrar Novo Lanche</h2>
+            <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="edit-index" value="-1">
+                
+                <input type="text" id="nome" placeholder="Nome do Lanche" required class="input-field p-4 rounded-xl">
+                <input type="number" id="preco" placeholder="Preço (ex: 25.50)" step="0.01" required class="input-field p-4 rounded-xl">
+                
+                <div class="md:col-span-2">
+                    <label id="label-imagem" class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Foto do Lanche (Arraste ou Clique)</label>
+                    <input type="file" id="imagem_file" accept="image/*" class="input-field w-full p-4 rounded-xl border-dashed border-2 border-gray-600">
+                    <p id="msg-imagem-edit" class="text-[10px] text-gray-500 mt-1 hidden">* Deixe vazio para manter a imagem atual</p>
+                </div>
+                
+                <input type="text" id="desc" placeholder="Descrição Curta" required class="input-field p-4 rounded-xl md:col-span-2">
+                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl">Salvar no Cardápio</button>
+                <button type="button" id="btn-cancelar" onclick="cancelarEdicao()" class="md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl hidden">Cancelar Edição</button>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4" id="lista-admin"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('form-produto');
+        let lanches = JSON.parse(localStorage.getItem('lanches_crazydog')) || [];
+
+        function renderListaAdmin() {
+            const container = document.getElementById('lista-admin');
+            container.innerHTML = lanches.map((item, index) => `
+                <div class="bg-[#1a1d23] p-4 rounded-2xl flex justify-between items-center border border-gray-800 mb-2">
+                    <div class="flex items-center gap-4">
+                        <img src="${item.imagem}" class="w-12 h-12 rounded-lg object-cover">
+                        <div>
+                            <p class="font-bold uppercase italic text-sm text-white">${item.nome}</p>
+                            <p class="text-[#a3e635] text-xs font-bold">R$ ${parseFloat(item.preco).toFixed(2)}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="prepararEdicao(${index})" class="text-blue-400 p-2 hover:bg-blue-500/10 rounded-lg transition-all">
+                            <i data-lucide="pencil"></i>
+                        </button>
+                        <button onclick="removerLanche(${index})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-all">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const index = document.getElementById('edit-index').value;
+            const fileInput = document.getElementById('imagem_file');
+            const file = fileInput.files[0];
+
+            // Se for novo cadastro, a imagem é obrigatória
+            if (index == "-1" && !file) {
+                alert("Por favor, selecione uma imagem!");
+                return;
+            }
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    salvarLanche(event.target.result, index);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // Se estiver editando e não enviou nova foto, mantém a antiga
+                salvarLanche(lanches[index].imagem, index);
+            }
+        });
+
+        function salvarLanche(imageData, index) {
+            const lancheData = {
+                id: index == "-1" ? Date.now() : lanches[index].id,
+                nome: document.getElementById('nome').value,
+                preco: document.getElementById('preco').value,
+                desc: document.getElementById('desc').value,
+                imagem: imageData
+            };
+
+            if (index == "-1") {
+                lanches.push(lancheData);
+            } else {
+                lanches[index] = lancheData;
+            }
+
+            localStorage.setItem('lanches_crazydog', JSON.stringify(lanches));
+            cancelarEdicao(); // Limpa o form e volta ao estado original
+            renderListaAdmin();
+            alert(index == "-1" ? "Lanche cadastrado!" : "Lanche atualizado!");
+        }
+
+        function prepararEdicao(index) {
+            const item = lanches[index];
+            document.getElementById('edit-index').value = index;
+            document.getElementById('nome').value = item.nome;
+            document.getElementById('preco').value = item.preco;
+            document.getElementById('desc').value = item.desc;
+            
+            // UI de Edição
+            document.getElementById('titulo-form').innerText = "Editando Lanche";
+            document.getElementById('btn-submit').innerText = "Atualizar Lanche";
+            document.getElementById('btn-submit').classList.replace('bg-[#f48c2e]', 'bg-[#a3e635]');
+            document.getElementById('btn-submit').classList.add('text-black');
+            document.getElementById('btn-cancelar').classList.remove('hidden');
+            document.getElementById('msg-imagem-edit').classList.remove('hidden');
+            document.getElementById('imagem_file').required = false;
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicao() {
+            form.reset();
+            document.getElementById('edit-index').value = "-1";
+            document.getElementById('titulo-form').innerText = "Cadastrar Novo Lanche";
+            document.getElementById('btn-submit').innerText = "Salvar no Cardápio";
+            document.getElementById('btn-submit').classList.replace('bg-[#a3e635]', 'bg-[#f48c2e]');
+            document.getElementById('btn-submit').classList.remove('text-black');
+            document.getElementById('btn-cancelar').classList.add('hidden');
+            document.getElementById('msg-imagem-edit').classList.add('hidden');
+            document.getElementById('imagem_file').required = true;
+        }
+
+        function removerLanche(index) {
+            if(confirm("Deseja remover este item?")) {
+                lanches.splice(index, 1);
+                localStorage.setItem('lanches_crazydog', JSON.stringify(lanches));
+                renderListaAdmin();
+            }
+        }
+
+        if (localStorage.getItem('is_admin') !== 'true') {
+            window.location.href = "login.html";
+        } else {
+            renderListaAdmin();
+        }
+
+        function logout() {
+            localStorage.removeItem('is_admin');
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>
