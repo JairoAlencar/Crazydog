@@ -86,7 +86,7 @@
     </main>
 
     <div id="cart-overlay" class="fixed inset-0 bg-black/80 z-20 hidden backdrop-blur-sm" onclick="toggleCart()"></div>
-    <div id="cart-drawer" class="cart-drawer fixed right-0 top-0 h-full w-full max-w-sm bg-[#1a1d23] shadow-2xl z-30 flex flex-col">
+    <div id="cart-drawer" class="cart-drawer fixed right-0 top-0 h-full w-full max-w-lg bg-[#1a1d23] shadow-2xl z-30 flex flex-col">
         <div class="p-6 flex justify-between items-center border-b border-gray-800">
             <h2 class="font-black italic uppercase text-[#f48c2e]">Seu Pedido</h2>
             <button onclick="toggleCart()" class="text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
@@ -237,26 +237,30 @@
                 countEl.classList.add('hidden');
             } else {
                 container.innerHTML = carrinho.map((item, index) => `
-                    <div class="bg-[#23272f] p-4 rounded-xl border border-gray-800 flex flex-col gap-3">
-                        <div class="flex items-center gap-4">
-                            <div class="flex-1">
-                                <p class="font-black text-xs uppercase italic">${item.nome}</p>
-                                <p class="text-[#f48c2e] font-bold text-xs">R$ ${parseFloat(item.preco).toFixed(2)}</p>
-                            </div>
-                            <button onclick="removerDoCarrinho(${index})" class="text-gray-600 hover:text-red-500 transition-colors">
-                                <i data-lucide="trash-2" size="16"></i>
-                            </button>
+                    <div class="bg-[#23272f] p-6 rounded-2xl border border-gray-800 flex flex-col gap-5 shadow-lg">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex-1">
+                            <p class="font-black text-lg uppercase italic text-white leading-tight tracking-tight">
+                                ${item.nome}
+                            </p>
+                            <p class="text-[#f48c2e] font-black text-sm mt-1">
+                                R$ ${parseFloat(item.preco).toFixed(2)}
+                            </p>
                         </div>
-                        
-                        <input 
-                            type="text" 
-                            placeholder="Ex: Sem cebola, guardanapo adicional..." 
-                            value="${item.observacao || ''}"
-                            onchange="salvarObservacao(${index}, this.value)"
-                            class="w-full bg-[#1a1d23] border border-gray-700 p-2 rounded-lg text-[10px] text-gray-300 outline-none focus:border-[#a3e635] transition-colors"
-                        >
+                        <button onclick="removerDoCarrinho(${index})" class="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
+                            <i data-lucide="trash-2" size="20"></i>
+                        </button>
                     </div>
-                `).join('');
+                    
+                    <div class="relative">
+                        <textarea 
+                            placeholder="Ex: Tirar cebola, refri gelado..." 
+                            onchange="salvarObservacao(${index}, this.value)"
+                            class="w-full bg-[#1a1d23] border border-gray-700 p-4 rounded-xl text-sm text-gray-200 outline-none focus:border-[#a3e635] transition-all min-h-[80px] resize-none"
+                        >${item.observacao || ''}</textarea>
+                    </div>
+                </div>
+            `).join('');
                 btnFinalizar.disabled = false;
                 btnFinalizar.className = "w-full py-4 rounded-2xl font-black uppercase tracking-widest bg-[#a3e635] text-[#1a1d23] hover:shadow-[0_0_20px_rgba(163,230,53,0.5)] transition-all";
                 countEl.classList.remove('hidden');
@@ -278,31 +282,46 @@
             let itensTexto = "";
 
             // 3. Monta a mensagem separando por categoria
+            const nomesPlural = {
+                'Lanche': 'LANCHES',
+                'Doce': 'DOCES',
+                'Bebida': 'BEBIDAS',
+                'Adicional': 'ADICIONAIS' // Aqui está a correção
+            };
+
             categorias.forEach(cat => {
                 const itensDaCat = carrinho.filter(i => i.categoria === cat);
                 
                 if (itensDaCat.length > 0) {
-                    itensTexto += `\n*${cat.toUpperCase()}S:*\n`;
+                    // Usamos o mapeamento para pegar o nome correto em vez de apenas somar "S"
+                    const tituloCorreto = nomesPlural[cat] || cat.toUpperCase() + 'S';
+                    itensTexto += `\n*${tituloCorreto}:*\n`;
+                    
                     itensDaCat.forEach(i => {
                         itensTexto += `• ${i.nome} - R$ ${parseFloat(i.preco).toFixed(2)}`;
-                        if (i.observacao) itensTexto += `\n   ┗ 📝 _Obs: ${i.observacao}_`;
+                        if (i.observacao) {
+                            const obsLimpa = i.observacao.trim();
+                            itensTexto += `\n   ┗ Obs: ${obsLimpa}`;
+                        }
                         itensTexto += `\n`;
                     });
                 }
             });
 
             // 4. Monta a mensagem final completa
-            const msg = `🍔 *CRAZY DOG - NOVO PEDIDO*
+            const msg = `*CRAZY DOG - NOVO PEDIDO*
         ------------------------------
         ${itensTexto}
         ------------------------------
-        📌 *FORMA:* ${tipoEntrega.toUpperCase()}
-        💰 *TOTAL:* R$ ${total.toFixed(2)}
+        *FORMA:* ${tipoEntrega.toUpperCase()}
+        *TOTAL:* R$ ${total.toFixed(2)}
         ------------------------------
         `;
 
             // 5. Envia para o WhatsApp
-            const whatsappLink = `https://wa.me/5515981033150?text=${encodeURIComponent(msg)}`;
+            const mensagemCodificada = encodeURIComponent(msg);
+            const whatsappLink = `https://wa.me/5515981033150?text=${mensagemCodificada}`;
+
             window.open(whatsappLink, '_blank');
         }
 
