@@ -35,9 +35,19 @@
                     <input type="file" id="imagem_file" accept="image/*" class="input-field w-full p-4 rounded-xl border-dashed border-2 border-gray-600">
                     <p id="msg-imagem-edit" class="text-[10px] text-gray-500 mt-1 hidden">* Deixe vazio para manter a imagem atual</p>
                 </div>
+                <label class="block text-xs font-bold uppercase text-[#a3e635]">Descrição</label>
                 <input type="text" id="desc" placeholder="Descrição Curta" required class="input-field p-4 rounded-xl md:col-span-2">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Categoria</label>
+                    <select id="categoria" class="input-field w-full p-4 rounded-xl outline-none">
+                        <option value="Lanche">Lanche</option>
+                        <option value="Doce">Doce</option>
+                        <option value="Bebida">Bebida</option>
+                        <option value="Adicional">Adicional</option>
+                    </select>
+                </div>
                 <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl">Salvar no Cardápio</button>
-                <button type="button" id="btn-cancelar" onclick="cancelarEdicao()" class="md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl hidden">Cancelar Edição</button>
+                <button type="button" id="btn-cancelar" onclick="cancelarEdicao()" class="md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl hidden">Cancelar Edição</button>            
             </form>
         </div>
 
@@ -119,7 +129,8 @@
             const lancheData = {
                 nome: document.getElementById('nome').value,
                 preco: parseFloat(document.getElementById('preco').value),
-                descricao: document.getElementById('desc').value, // Envia para a coluna 'descricao'
+                descricao: document.getElementById('desc').value,
+                categoria: document.getElementById('categoria').value,
                 imagem: imageData
             };
 
@@ -150,9 +161,8 @@
             document.getElementById('edit-index').value = index;
             document.getElementById('nome').value = item.nome;
             document.getElementById('preco').value = item.preco;
-            
-            // O ERRO ESTAVA AQUI: item.desc não existe mais, agora é item.descricao
             document.getElementById('desc').value = item.descricao || ""; 
+            document.getElementById('categoria').value = item.categoria || "Lanche";
             
             document.getElementById('titulo-form').innerText = "Editando Lanche";
             document.getElementById('btn-submit').innerText = "Atualizar Lanche";
