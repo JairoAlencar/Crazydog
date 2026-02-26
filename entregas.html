@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <link rel="icon" href="logo-sem-fundo.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrazyDog - Taxas de Entrega</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
+        body { background-color: var(--bg-dark); color: white; }
+        .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; outline: none; }
+        .input-field:focus { border-color: var(--primary-orange); }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-black uppercase italic text-[#f48c2e] flex items-center gap-3">
+                <i data-lucide="truck"></i> Taxas de Entrega
+            </h1>
+            <div class="flex gap-4">
+                <a href="admin.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all uppercase font-bold">Voltar</a>
+                <button onclick="logout()" class="text-xs bg-red-600 px-4 py-2 rounded-lg font-bold uppercase">Sair</button>
+            </div>
+        </header>
+
+        <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
+            <form id="form-taxa" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="bairro" placeholder="Nome do Bairro" required class="input-field p-4 rounded-xl font-bold">
+                <input type="number" id="valor" placeholder="Taxa (R$)" step="0.01" required class="input-field p-4 rounded-xl font-bold">
+                <button type="submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl hover:scale-[1.02] transition-all">
+                    Salvar Bairro
+                </button>
+            </form>
+        </div>
+
+        <div id="lista-taxas" class="grid grid-cols-1 gap-4"></div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('form-taxa').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const bairro = document.getElementById('bairro').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+
+            const { error } = await supabaseClient.from('taxas_entrega').upsert([{ bairro, valor }]);
+            if (error) alert(error.message);
+            else { document.getElementById('form-taxa').reset(); carregarTaxas(); }
+        });
+
+        async function carregarTaxas() {
+            const { data, error } = await supabaseClient.from('taxas_entrega').select('*').order('bairro');
+            if (!error) {
+                const container = document.getElementById('lista-taxas');
+                container.innerHTML = data.map(t => `
+                    <div class="bg-[#1a1d23] p-5 rounded-2xl border border-gray-800 flex justify-between items-center">
+                        <div>
+                            <span class="font-black uppercase text-white">${t.bairro}</span>
+                            <p class="text-[#a3e635] font-bold text-xs">Taxa: R$ ${parseFloat(t.valor).toFixed(2)}</p>
+                        </div>
+                        <button onclick="deletarTaxa(${t.id})" class="text-red-500 p-2"><i data-lucide="trash-2"></i></button>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            }
+        }
+
+        async function deletarTaxa(id) {
+            if(confirm("Remover este bairro?")) {
+                await supabaseClient.from('taxas_entrega').delete().eq('id', id);
+                carregarTaxas();
+            }
+        }
+        carregarTaxas();
+    </script>
+</body>
+</html>

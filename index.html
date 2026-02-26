@@ -19,43 +19,29 @@
         .cart-drawer { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
         .cart-drawer.open { transform: translateX(0); }
         .orange-border-card { border: 2px solid var(--primary-orange); border-radius: 1.5rem; }
+        
         @keyframes float-pulse {
-            0% {
-                transform: scale(1);
-                filter: drop-shadow(0 0 20px rgba(244, 140, 46, 0.4));
-            }
-            50% {
-                transform: scale(1.05) translateY(-10px);
-                filter: drop-shadow(0 0 40px rgba(244, 140, 46, 0.8));
-            }
-            100% {
-                transform: scale(1);
-                filter: drop-shadow(0 0 20px rgba(244, 140, 46, 0.4));
-            }
+            0% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(244, 140, 46, 0.4)); }
+            50% { transform: scale(1.05) translateY(-10px); filter: drop-shadow(0 0 40px rgba(244, 140, 46, 0.8)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(244, 140, 46, 0.4)); }
         }
-
-        .animate-logo {
-            animation: float-pulse 3s infinite ease-in-out;
-        }
+        .animate-logo { animation: float-pulse 3s infinite ease-in-out; }
+        
         @keyframes fade-slide {
             0%, 10% { opacity: 0; transform: translateX(-10px); }
             20%, 80% { opacity: 1; transform: translateX(0); }
             90%, 100% { opacity: 0; transform: translateX(-10px); }
         }
-
-        .animate-msg {
-            animation: fade-slide 5s infinite;
-        }
+        .animate-msg { animation: fade-slide 5s infinite; }
     </style>
 </head>
-<body class="font-sans">
+<body class="font-sans min-h-screen flex flex-col overflow-x-hidden">
 
     <header class="bg-[#1a1d23] p-4 sticky top-0 z-20 shadow-lg flex justify-end items-center border-b border-gray-800">
         <div class="flex items-center gap-3">
             <a href="login.html" class="p-2 bg-[#2d3139] rounded-xl hover:bg-gray-700 transition-colors flex items-center justify-center">
                 <i data-lucide="user" class="text-white"></i>
             </a>
-
             <button onclick="toggleCart()" class="relative p-2 bg-[#2d3139] rounded-xl hover:bg-gray-700 transition-colors flex items-center justify-center">
                 <i data-lucide="shopping-cart" class="text-white"></i>
                 <span id="cart-count" class="hidden absolute -top-1 -right-1 bg-[#f48c2e] text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
@@ -63,13 +49,10 @@
         </div>
     </header>
 
-    <!--Banner-->
-    <div class="relative min-h-[400px] md:min-h-400px] bg-[#1a1d23] flex items-center justify-center overflow-hidden border-b-4 border-[#f48c2e]">
+    <div class="relative min-h-[400px] bg-[#1a1d23] flex items-center justify-center overflow-hidden border-b-4 border-[#f48c2e]">
         <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('banner.png'); filter: blur(2px);"></div>
         <div class="relative z-10 flex flex-col items-center p-6 text-center">
-            <img src="logo-sem-fundo.png" 
-                alt="CrazyDog Logo" 
-                class="w-60 h-60 md:w-[600px] md:h-[200px] object-contain animate-logo">
+            <img src="logo-sem-fundo.png" alt="CrazyDog Logo" class="w-60 h-60 md:w-[600px] md:h-[200px] object-contain animate-logo">
             <span class="mt-4 px-9 py-2 bg-[#a3e635] text-[#1a1d23] text-xs md:text-sm font-black uppercase italic rounded-full shadow-[0_0_20px_rgba(163,230,53,0.6)] z-20">
                 O melhor dog de Itapetininga
             </span>
@@ -77,15 +60,21 @@
         <div class="absolute inset-0 bg-gradient-to-t from-[#23272f] via-transparent to-transparent z-0"></div>
     </div>
 
-    <main class="max-w-6xl mx-auto p-6 pb-24">
+    <main class="max-w-6xl mx-auto p-6 pb-24 flex-1">
         <div class="flex items-center gap-3 mb-8">
             <h3 class="text-2xl font-black uppercase italic tracking-tighter text-[#a3e635] border-b-4 border-[#f48c2e]">Nosso cardápio</h3>
         </div>
-
         <div id="cardapio" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </main>
 
+    <footer class="relative z-20 mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-gray-400 text-xs font-medium">&copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
     <div id="cart-overlay" class="fixed inset-0 bg-black/80 z-20 hidden backdrop-blur-sm" onclick="toggleCart()"></div>
+    
     <div id="cart-drawer" class="cart-drawer fixed right-0 top-0 h-full w-full max-w-lg bg-[#1a1d23] shadow-2xl z-30 flex flex-col">
         <div class="p-6 flex justify-between items-center border-b border-gray-800">
             <h2 class="font-black italic uppercase text-[#f48c2e]">Seu Pedido</h2>
@@ -94,296 +83,295 @@
         
         <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
 
-        <div class="p-6 bg-[#16191e] border-t border-gray-800">
-            <div class="flex justify-between items-center mb-6">
-                <span class="text-gray-500 font-bold uppercase text-xs">Total:</span>
-                <span id="cart-total" class="text-2xl font-black text-[#a3e635]">R$ 0,00</span>
-            </div>
-            <div class="mb-6 p-4 bg-[#23272f] rounded-2xl border border-gray-800">
-                <label class="block text-[10px] font-black uppercase text-gray-500 mb-3 tracking-widest text-center">Como deseja receber?</label>
+        <div class="p-6 bg-[#16191e] border-t border-gray-800 space-y-4">
+            <div>
+                <label class="block text-[10px] font-black uppercase text-gray-500 mb-1 tracking-widest">Cupom</label>
                 <div class="flex gap-2">
-                    <label class="flex-1 flex flex-col items-center p-3 rounded-xl border-2 border-gray-700 cursor-pointer hover:bg-gray-800 transition-all has-[:checked]:border-[#a3e635] has-[:checked]:bg-[#a3e635]/10">
-                        <input type="radio" name="tipo_entrega" value="Entrega" checked class="hidden">
-                        <i data-lucide="truck" class="w-5 h-5 mb-1 text-white"></i>
-                        <span class="text-[9px] font-black uppercase">Entrega</span>
-                    </label>
-                    
-                    <label class="flex-1 flex flex-col items-center p-3 rounded-xl border-2 border-gray-700 cursor-pointer hover:bg-gray-800 transition-all has-[:checked]:border-[#f48c2e] has-[:checked]:bg-[#f48c2e]/10">
-                        <input type="radio" name="tipo_entrega" value="Retirada" class="hidden">
-                        <i data-lucide="package-search" class="w-5 h-5 mb-1 text-white"></i>
-                        <span class="text-[9px] font-black uppercase">Retirada</span>
-                    </label>
+                    <input type="text" id="cupom-input" placeholder="CÓDIGO" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs uppercase font-black outline-none focus:border-[#a3e635]">
+                    <button onclick="aplicarCupom()" class="bg-[#a3e635] text-[#1a1d23] px-4 rounded-xl font-black text-xs uppercase">Ok</button>
+                </div>
+                <p id="cupom-msg" class="text-[10px] mt-1 font-bold hidden"></p>
+            </div>
+
+            <div class="space-y-3">
+                <label class="block text-[10px] font-black uppercase text-gray-500 tracking-widest text-center">Forma de Entrega</label>
+                <div class="flex gap-2 p-1 bg-[#23272f] rounded-xl">
+                    <button onclick="setTipoEntrega('delivery')" id="btn-delivery" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23]">Motoboy</button>
+                    <button onclick="setTipoEntrega('retirada')" id="btn-retirada" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400">Retirada</button>
+                </div>
+
+                <div id="secao-endereco" class="space-y-2">
+                    <input type="text" id="rua" placeholder="Rua e Número" class="w-full bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none">
+                    <select id="select-bairro" onchange="selecionarBairro()" class="w-full bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs font-black uppercase outline-none focus:border-[#f48c2e]">
+                        <option value="0">Selecione o Bairro</option>
+                    </select>
                 </div>
             </div>
-            <button id="btn-finalizar" onclick="finalizarPedido()" disabled class="w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all bg-gray-700 text-gray-500">
-                Finalizar Pedido
+
+            <div class="flex justify-between items-center border-t border-gray-800 pt-4">
+                <span class="text-gray-500 font-bold uppercase text-xs">Total:</span>
+                <div class="text-right">
+                    <span id="txt-frete" class="text-[10px] text-gray-400 block uppercase font-bold">Frete: R$ 0,00</span>
+                    <span id="cart-total" class="text-2xl font-black text-[#a3e635]">R$ 0,00</span>
+                </div>
+            </div>
+
+            <button id="btn-finalizar" onclick="finalizarPedido()" disabled class="w-full py-4 rounded-2xl font-black uppercase bg-gray-700 text-gray-500 transition-all">
+                Finalizar no WhatsApp
             </button>
         </div>
     </div>
 
+    <div id="modal-custom" class="fixed inset-0 bg-black/90 z-50 hidden backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-[#1a1d23] w-full max-w-lg rounded-[2.5rem] border border-gray-800 flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+            <div class="p-8 border-b border-gray-800 flex justify-between items-center bg-[#23272f]">
+                <div>
+                    <h2 id="modal-titulo" class="text-2xl font-black uppercase italic text-[#f48c2e]">Personalizar</h2>
+                    <p id="modal-preco-base" class="text-[#a3e635] font-bold text-sm"></p>
+                </div>
+                <button onclick="fecharModal()" class="text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <div id="lista-adicionais-modal" class="flex-1 overflow-y-auto p-8 space-y-3"></div>
+            <div class="p-8 bg-[#23272f] border-t border-gray-800">
+                <button onclick="confirmarPersonalizacao()" class="w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl">
+                    Adicionar - <span id="modal-total-final">R$ 0,00</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="avatar-container" class="fixed bottom-6 left-6 z-10 flex items-center transition-opacity duration-300">
+        <div class="absolute left-16 md:left-32 bg-white text-[#1a1d23] px-3 py-1.5 md:px-4 md:py-2 rounded-2xl rounded-bl-none shadow-xl border-2 border-[#a3e635] animate-msg w-max block">
+            <p class="text-[9px] md:text-[11px] font-black uppercase tracking-tighter text-center">Precisa de ajuda?</p>
+        </div>
+        <a href="https://wa.me/5515981033150?text=Olá! Preciso de ajuda com o cardápio." target="_blank" class="w-16 h-16 md:w-32 md:h-32 bg-[#a3e635] rounded-full p-1 shadow-2xl hover:scale-110 transition-transform active:scale-95 flex items-center justify-center overflow-hidden border-4 border-white">
+            <img src="avatar-sem-fundo.png" alt="Assistente" class="w-full h-full object-contain">
+        </a>
+    </div>
+
     <script>
- // 1. Configuração do Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 2. Variáveis Globais
-        let LANCHES = [];
-        let carrinho = [];
+        let LANCHES = [], carrinho = [], descontoGlobal = 0, nomeCupomAtivo = "";
+        let itemSendoEditado = null, adicionaisSelecionados = [];
+        let taxaEntrega = 0, bairroNome = "", tipoEntrega = 'delivery';
 
-        // 3. Buscar Dados do Supabase
-        async function buscarLanchesDoBanco() {
-            const { data, error } = await supabaseClient
-                .from('lanches')
-                .select('*')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error("Erro ao buscar lanches:", error.message);
-                document.getElementById('cardapio').innerHTML = `<p class="text-red-500 text-xs italic">Erro ao carregar cardápio.</p>`;
-            } else {
-                LANCHES = data;
-                renderizarCardapio();
-            }
-        }
-
-        // 4. Funções de Interface
-        function renderizarCardapio() {
-            const container = document.getElementById('cardapio');
-            // Verifique se no banco os nomes estão exatamente assim (maiúsculas/minúsculas)
-            const categoriasParaFiltrar = ['Lanche', 'Doce', 'Bebida', 'Adicional'];
-            
-            if (LANCHES.length === 0) {
-                container.innerHTML = `<p class="col-span-full text-center text-gray-500 italic">Nenhum item disponível.</p>`;
-                return;
-            }
-
-            container.innerHTML = ''; 
-
-            categoriasParaFiltrar.forEach(cat => {
-                const itensFiltrados = LANCHES.filter(item => item.categoria === cat);
-                
-                if (itensFiltrados.length > 0) {
-                    // Título formatado para o cliente
-                    const nomesExibicao = { 'Lanche': 'Lanches', 'Doce': 'Doces', 'Bebida': 'Bebidas','Adicional':'Adicionais'};
-                    
-                    // Criamos uma seção inteira para a categoria
-                    const HTMLCategoria = `
-                        <div class="col-span-full w-full mt-10 mb-4 border-l-4 border-[#f48c2e] pl-4">
-                            <h3 class="text-2xl font-black uppercase italic tracking-tighter text-[#a3e635]">
-                                ${nomesExibicao[cat]}
-                            </h3>
-                        </div>
-                        
-                        ${itensFiltrados.map(item => `
-                            <div class="orange-border-card bg-[#2d3139] overflow-hidden group h-full flex flex-col">
-                                <div class="h-48 overflow-hidden relative">
-                                    <img src="${item.imagem}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80">
-                                </div>
-                                <div class="p-6 flex-1 flex flex-col">
-                                    <h4 class="text-lg font-black uppercase italic">${item.nome}</h4>
-                                    <p class="text-gray-400 text-xs mt-2 mb-4 leading-tight flex-1">${item.descricao || 'Sem descrição.'}</p>
-                                    <div class="flex justify-between items-center mt-auto">
-                                        <span class="text-[#a3e635] font-black text-xl">R$ ${parseFloat(item.preco).toFixed(2)}</span>
-                                        <button onclick="adicionarNoCarrinho(${item.id})" class="bg-[#f48c2e] hover:bg-orange-600 text-white p-3 rounded-xl transition-all active:scale-90">
-                                            <i data-lucide="plus" size="20"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `).join('')}
-                    `;
-                    
-                    container.innerHTML += HTMLCategoria;
-                }
-            });
-
+        document.addEventListener('DOMContentLoaded', () => {
+            buscarLanchesDoBanco();
+            carregarBairros();
             lucide.createIcons();
+        });
+
+        async function buscarLanchesDoBanco() {
+            const { data } = await supabaseClient.from('lanches').select('*').order('created_at', { ascending: false });
+            if (data) { LANCHES = data; renderizarCardapio(); }
         }
 
-        function toggleCart() {
-            document.getElementById('cart-drawer').classList.toggle('open');
-            document.getElementById('cart-overlay').classList.toggle('hidden');
-        }
-
-        // 5. Lógica do Carrinho
-        function adicionarNoCarrinho(id) {
-            const itemOriginal = LANCHES.find(l => l.id == id);
-            
-            if (itemOriginal) {
-                // Criamos uma cópia para poder adicionar a observação sem afetar o objeto original
-                const novoItem = { ...itemOriginal, observacao: "" };
-                carrinho.push(novoItem);
-                atualizarCarrinho();
-                if(!document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
+        async function carregarBairros() {
+            const { data } = await supabaseClient.from('taxas_entrega').select('*').order('bairro');
+            if (data) {
+                const select = document.getElementById('select-bairro');
+                select.innerHTML = '<option value="0">Selecione o Bairro</option>' + 
+                    data.map(t => `<option value="${t.valor}">${t.bairro}</option>`).join('');
             }
         }
 
-        function removerDoCarrinho(index) {
-            carrinho.splice(index, 1);
+        function setTipoEntrega(tipo) {
+            tipoEntrega = tipo;
+            const secao = document.getElementById('secao-endereco');
+            const btnD = document.getElementById('btn-delivery');
+            const btnR = document.getElementById('btn-retirada');
+            
+            if (tipo === 'retirada') {
+                secao.classList.add('hidden');
+                taxaEntrega = 0;
+                btnR.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23]";
+                btnD.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400";
+            } else {
+                secao.classList.remove('hidden');
+                btnD.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23]";
+                btnR.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400";
+                selecionarBairro();
+            }
             atualizarCarrinho();
         }
 
-        function atualizarCarrinho() {
-            const container = document.getElementById('cart-items');
-            const totalEl = document.getElementById('cart-total');
-            const countEl = document.getElementById('cart-count');
-            const btnFinalizar = document.getElementById('btn-finalizar');
+        function selecionarBairro() {
+            const select = document.getElementById('select-bairro');
+            taxaEntrega = parseFloat(select.value);
+            bairroNome = select.options[select.selectedIndex].text;
+            document.getElementById('txt-frete').innerText = `Frete: R$ ${taxaEntrega.toFixed(2)}`;
+            atualizarCarrinho();
+        }
 
-            if(carrinho.length === 0) {
-                container.innerHTML = '<p class="text-gray-600 text-center uppercase font-bold text-[10px] mt-10 tracking-widest">Carrinho vazio</p>';
-                btnFinalizar.disabled = true;
-                btnFinalizar.className = "w-full py-4 rounded-2xl font-black uppercase tracking-widest bg-gray-800 text-gray-600 cursor-not-allowed";
-                countEl.classList.add('hidden');
-            } else {
-                container.innerHTML = carrinho.map((item, index) => `
-                    <div class="bg-[#23272f] p-6 rounded-2xl border border-gray-800 flex flex-col gap-5 shadow-lg">
-                    <div class="flex items-center justify-between gap-4">
-                        <div class="flex-1">
-                            <p class="font-black text-lg uppercase italic text-white leading-tight tracking-tight">
-                                ${item.nome}
-                            </p>
-                            <p class="text-[#f48c2e] font-black text-sm mt-1">
-                                R$ ${parseFloat(item.preco).toFixed(2)}
-                            </p>
-                        </div>
-                        <button onclick="removerDoCarrinho(${index})" class="p-3 bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all">
-                            <i data-lucide="trash-2" size="20"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="relative">
-                        <textarea 
-                            placeholder="Ex: Tirar cebola, refri gelado..." 
-                            onchange="salvarObservacao(${index}, this.value)"
-                            class="w-full bg-[#1a1d23] border border-gray-700 p-4 rounded-xl text-sm text-gray-200 outline-none focus:border-[#a3e635] transition-all min-h-[80px] resize-none"
-                        >${item.observacao || ''}</textarea>
-                    </div>
-                </div>
-            `).join('');
-                btnFinalizar.disabled = false;
-                btnFinalizar.className = "w-full py-4 rounded-2xl font-black uppercase tracking-widest bg-[#a3e635] text-[#1a1d23] hover:shadow-[0_0_20px_rgba(163,230,53,0.5)] transition-all";
-                countEl.classList.remove('hidden');
-                countEl.innerText = carrinho.length;
-            }
-
-            const total = carrinho.reduce((acc, item) => acc + parseFloat(item.preco), 0);
-            totalEl.innerText = `R$ ${total.toFixed(2)}`;
+        function renderizarCardapio() {
+            const container = document.getElementById('cardapio');
+            const cats = ['Lanche', 'Doce', 'Bebida'];
+            const nomesPlural = { 'Lanche': 'Lanches', 'Doce': 'Doces', 'Bebida': 'Bebidas' };
+            container.innerHTML = ''; 
+            cats.forEach(cat => {
+                const itens = LANCHES.filter(i => i.categoria === cat);
+                if (itens.length > 0) {
+                    container.innerHTML += `<div class="col-span-full mt-10 mb-4 border-l-4 border-[#f48c2e] pl-4"><h3 class="text-2xl font-black italic text-[#a3e635]">${nomesPlural[cat]}</h3></div>`;
+                    itens.forEach(item => {
+                        container.innerHTML += `
+                        <div class="orange-border-card bg-[#2d3139] overflow-hidden flex flex-col shadow-lg">
+                            <div class="h-48 overflow-hidden"><img src="${item.imagem}" class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform"></div>
+                            <div class="p-6 flex-1 flex flex-col">
+                                <h4 class="font-black uppercase italic">${item.nome}</h4>
+                                <p class="text-gray-400 text-xs mt-2 flex-1">${item.descricao || ''}</p>
+                                <div class="flex justify-between items-center mt-4">
+                                    <span class="text-[#a3e635] font-black text-xl">R$ ${parseFloat(item.preco).toFixed(2)}</span>
+                                    <button onclick="adicionarNoCarrinho(${item.id})" class="bg-[#f48c2e] text-white p-3 rounded-xl hover:scale-110 transition-all"><i data-lucide="plus" size="20"></i></button>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                }
+            });
             lucide.createIcons();
         }
 
-        function finalizarPedido() {
-            // 1. Pega o tipo de entrega escolhido
-            const tipoEntrega = document.querySelector('input[name="tipo_entrega"]:checked').value;
-            const total = carrinho.reduce((acc, item) => acc + parseFloat(item.preco), 0);
-            
-            // 2. Define as categorias na ordem que você quer que apareça
-            const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional'];
-            let itensTexto = "";
+        function adicionarNoCarrinho(id) {
+            const item = LANCHES.find(l => l.id == id);
+            if (!item) return;
+            if (item.categoria !== 'Lanche') {
+                carrinho.push({ ...item, adicionais: [], totalItem: parseFloat(item.preco), observacao: "" });
+                atualizarCarrinho();
+                if(!document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
+                return;
+            }
+            itemSendoEditado = { ...item };
+            adicionaisSelecionados = [];
+            document.getElementById('modal-titulo').innerText = item.nome;
+            document.getElementById('modal-preco-base').innerText = `Base: R$ ${parseFloat(item.preco).toFixed(2)}`;
+            const adds = LANCHES.filter(l => l.categoria === 'Adicional');
+            document.getElementById('lista-adicionais-modal').innerHTML = adds.map(add => `
+                <label class="flex items-center justify-between p-4 bg-[#2d3139] rounded-2xl border border-gray-700 cursor-pointer hover:border-[#a3e635] transition-all">
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" class="w-5 h-5 accent-[#a3e635]" onchange="toggleAdicional(${add.id}, ${add.preco}, '${add.nome}', this.checked)">
+                        <span class="text-sm font-bold uppercase">${add.nome}</span>
+                    </div>
+                    <span class="text-[#a3e635] font-bold text-xs">+ R$ ${parseFloat(add.preco).toFixed(2)}</span>
+                </label>`).join('');
+            atualizarTotalModal();
+            document.getElementById('modal-custom').classList.remove('hidden');
+            lucide.createIcons();
+        }
 
-            // 3. Monta a mensagem separando por categoria
-            const nomesPlural = {
-                'Lanche': 'LANCHES',
-                'Doce': 'DOCES',
-                'Bebida': 'BEBIDAS',
-                'Adicional': 'ADICIONAIS' // Aqui está a correção
-            };
+        function toggleAdicional(id, preco, nome, isChecked) {
+            if (isChecked) adicionaisSelecionados.push({ id, preco: parseFloat(preco), nome });
+            else adicionaisSelecionados = adicionaisSelecionados.filter(a => a.id !== id);
+            atualizarTotalModal();
+        }
 
-            categorias.forEach(cat => {
-                const itensDaCat = carrinho.filter(i => i.categoria === cat);
+        function atualizarTotalModal() {
+            const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
+            document.getElementById('modal-total-final').innerText = `R$ ${total.toFixed(2)}`;
+        }
+
+        function confirmarPersonalizacao() {
+            const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
+            carrinho.push({ ...itemSendoEditado, adicionais: [...adicionaisSelecionados], totalItem: total, observacao: "" });
+            fecharModal(); atualizarCarrinho(); toggleCart();
+        }
+
+        function fecharModal() { document.getElementById('modal-custom').classList.add('hidden'); }
+
+        function atualizarCarrinho() {
+            const container = document.getElementById('cart-items');
+            if(carrinho.length === 0) {
+                container.innerHTML = '<p class="text-gray-600 text-center uppercase font-bold text-[10px] mt-10">Carrinho vazio</p>';
+                document.getElementById('btn-finalizar').disabled = true;
+                document.getElementById('cart-total').innerText = "R$ 0,00";
+                document.getElementById('cart-count').classList.add('hidden');
+            } else {
+                container.innerHTML = carrinho.map((item, index) => `
+                    <div class="bg-[#23272f] p-6 rounded-2xl flex flex-col gap-3 shadow-md border border-gray-800">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="font-black text-white uppercase italic tracking-tight">${item.nome}</p>
+                                <p class="text-[#f48c2e] font-black text-sm">R$ ${(item.totalItem || item.preco).toFixed(2)}</p>
+                                ${item.adicionais?.length ? `<p class="text-[9px] text-gray-500 uppercase font-bold mt-1 tracking-widest">+ ${item.adicionais.map(a=>a.nome).join(', ')}</p>` : ''}
+                            </div>
+                            <button onclick="removerDoCarrinho(${index})" class="text-red-500 hover:scale-110 transition-transform"><i data-lucide="trash-2" size="18"></i></button>
+                        </div>
+                        <textarea onchange="salvarObservacao(${index}, this.value)" class="bg-[#1a1d23] p-3 rounded-xl text-xs outline-none border border-gray-700 focus:border-[#a3e635] min-h-[60px] resize-none">${item.observacao || ''}</textarea>
+                    </div>`).join('');
                 
-                if (itensDaCat.length > 0) {
-                    // Usamos o mapeamento para pegar o nome correto em vez de apenas somar "S"
-                    const tituloCorreto = nomesPlural[cat] || cat.toUpperCase() + 'S';
-                    itensTexto += `\n*${tituloCorreto}:*\n`;
-                    
-                    itensDaCat.forEach(i => {
-                        itensTexto += `• ${i.nome} - R$ ${parseFloat(i.preco).toFixed(2)}`;
-                        if (i.observacao) {
-                            const obsLimpa = i.observacao.trim();
-                            itensTexto += `\n   ┗ Obs: ${obsLimpa}`;
-                        }
+                const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
+                const totalFinal = Math.max(0, subtotal + taxaEntrega - descontoGlobal);
+                document.getElementById('cart-total').innerText = `R$ ${totalFinal.toFixed(2)}`;
+                document.getElementById('btn-finalizar').disabled = false;
+                document.getElementById('btn-finalizar').className = "w-full py-4 rounded-2xl font-black uppercase bg-[#a3e635] text-[#1a1d23] shadow-lg hover:shadow-[#a3e635]/20 transition-all";
+                document.getElementById('cart-count').classList.remove('hidden');
+                document.getElementById('cart-count').innerText = carrinho.length;
+            }
+            lucide.createIcons();
+        }
+
+        async function aplicarCupom() {
+            const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
+            const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
+            const msg = document.getElementById('cupom-msg');
+            if (data && (!data.expira_em || new Date(data.expira_em) > new Date())) {
+                descontoGlobal = parseFloat(data.valor);
+                nomeCupomAtivo = data.codigo;
+                msg.innerText = `CUPOM OK: - R$ ${descontoGlobal.toFixed(2)}`;
+                msg.className = "text-[10px] mt-1 text-[#a3e635] font-bold block";
+            } else {
+                descontoGlobal = 0; msg.innerText = "CUPOM INVÁLIDO";
+                msg.className = "text-[10px] mt-1 text-red-500 font-bold block";
+            }
+            atualizarCarrinho();
+        }
+
+        function finalizarPedido() {
+            const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
+            const totalFinal = Math.max(0, subtotal + taxaEntrega - descontoGlobal);
+            const rua = document.getElementById('rua').value;
+            
+            if (tipoEntrega === 'delivery' && (taxaEntrega === 0 || !rua)) {
+                alert("Por favor, selecione o bairro e preencha a rua!");
+                return;
+            }
+
+            let itensTexto = "";
+            ['Lanche', 'Doce', 'Bebida'].forEach(cat => {
+                const itens = carrinho.filter(i => i.categoria === cat);
+                if (itens.length > 0) {
+                    itensTexto += `\n*${cat.toUpperCase()}S:*\n`;
+                    itens.forEach(i => {
+                        itensTexto += `• ${i.nome} (R$ ${(i.totalItem || i.preco).toFixed(2)})`;
+                        if (i.adicionais?.length) itensTexto += `\n   ┗ Extras: ${i.adicionais.map(a => a.nome).join(', ')}`;
+                        if (i.observacao) itensTexto += `\n   ┗ Obs: ${i.observacao.trim()}`;
                         itensTexto += `\n`;
                     });
                 }
             });
 
-            // 4. Monta a mensagem final completa
-            const msg = `*CRAZY DOG - NOVO PEDIDO*
-        ------------------------------
-        ${itensTexto}
-        ------------------------------
-        *FORMA:* ${tipoEntrega.toUpperCase()}
-        *TOTAL:* R$ ${total.toFixed(2)}
-        ------------------------------
-        `;
+            let msg = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;
+            msg += `\n*ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA NO LOCAL' : 'MOTOBOY'}`;
+            if (tipoEntrega === 'delivery') {
+                msg += `\n*ENDEREÇO:* ${rua}`;
+                msg += `\n*BAIRRO:* ${bairroNome}`;
+                msg += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
+            }
+            if (descontoGlobal > 0) msg += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${descontoGlobal.toFixed(2)})`;
+            msg += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
 
-            // 5. Envia para o WhatsApp
-            const mensagemCodificada = encodeURIComponent(msg);
-            const whatsappLink = `https://wa.me/5515981033150?text=${mensagemCodificada}`;
-
-            window.open(whatsappLink, '_blank');
+            window.open(`https://wa.me/5515981033150?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
-        // 6. Inicialização
-        document.addEventListener('DOMContentLoaded', () => {
-            buscarLanchesDoBanco();
-            lucide.createIcons();
-        });  
-        
-        function salvarObservacao(index, texto) {
-            carrinho[index].observacao = texto;
+        function toggleCart() {
+            const isOpen = document.getElementById('cart-drawer').classList.toggle('open');
+            document.getElementById('cart-overlay').classList.toggle('hidden');
+            document.getElementById('avatar-container').style.opacity = isOpen ? "0" : "1";
         }
+        function removerDoCarrinho(index) { carrinho.splice(index, 1); atualizarCarrinho(); }
+        function salvarObservacao(index, texto) { carrinho[index].observacao = texto; }
     </script>
 </body>
-    <!--<div class="fixed bottom-8 left-8 z-50 flex items-center">
-        
-        <div class="absolute left-32 bg-white text-[#1a1d23] px-4 py-2 rounded-2xl rounded-bl-none shadow-xl border-2 border-[#a3e635] animate-msg w-max">
-            <p class="text-[13px] font-black uppercase tracking-tighter">Precisa de ajuda?</p>
-        </div>
-        
-        <a href="https://wa.me/5515981033150?text=Olá! Preciso de ajuda com o cardápio." 
-        target="_blank" 
-        class="w-32 h-32 bg-[#a3e635] rounded-full p-1 shadow-2xl hover:scale-110 transition-transform active:scale-95 flex items-center justify-center overflow-hidden border-4 border-white">
-            <img src="avatar-sem-fundo.png" alt="Assistente CrazyDog" class="w-full h-full object-contain">
-        </a>
-    </div>-->
-    <div id="avatar-container" class="fixed bottom-6 left-6 z-10 flex items-center transition-opacity duration-300">
-    
-    <div class="absolute left-16 md:left-32 bg-white text-[#1a1d23] px-3 py-1.5 md:px-4 md:py-2 rounded-2xl rounded-bl-none shadow-xl border-2 border-[#a3e635] animate-msg w-max block">
-            <p class="text-[9px] md:text-[11px] font-black uppercase tracking-tighter text-center">
-                Precisa de ajuda?
-            </p>
-        </div>
-        
-        <a href="https://wa.me/5515981033150?text=Olá! Preciso de ajuda com o cardápio." 
-        target="_blank" 
-        class="w-16 h-16 md:w-32 md:h-32 bg-[#a3e635] rounded-full p-1 shadow-2xl hover:scale-110 transition-transform active:scale-95 flex items-center justify-center overflow-hidden border-4 border-white">
-            <img src="avatar-sem-fundo.png" alt="Assistente CrazyDog" class="w-full h-full object-contain">
-        </a>
-    </div>
-    <footer class="mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
-        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            
-            <div class="flex flex-col items-center md:items-start">
-                <!--
-                <h4 class="text-[#f48c2e] font-black uppercase italic tracking-tighter text-lg">CrazyDog</h4>
-                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">O melhor dog de Itapetininga</p>
-                -->
-            </div>
-
-            <div class="text-center">
-                <p class="text-gray-400 text-xs font-medium">
-                    &copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.
-                </p>
-            </div>
-
-            <div class="flex gap-4">
-                <!--
-                <a href="#" class="text-gray-500 hover:text-[#a3e635] transition-colors"><i data-lucide="instagram" size="18"></i></a>
-                <a href="#" class="text-gray-500 hover:text-[#a3e635] transition-colors"><i data-lucide="facebook" size="18"></i></a>
-                -->
-            </div>
-        </div>
-    </footer>
 </html>

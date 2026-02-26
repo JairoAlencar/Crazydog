@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <link rel="icon" href="logo-sem-fundo.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrazyDog - Gestão de Cardápio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
+        body { background-color: var(--bg-dark); color: white; }
+        .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; }
+        .sortable-ghost { opacity: 0.4; background: #f48c2e !important; }
+        .drag-handle { cursor: grab; }
+        .drag-handle:active { cursor: grabbing; }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-black uppercase italic text-[#f48c2e]">Gestão de Cardápio</h1>
+            <div class="flex gap-4">
+                <a href="admin.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all uppercase font-bold">Voltar</a>
+                <button onclick="logout()" class="text-xs bg-red-600 px-4 py-2 rounded-lg font-bold uppercase">Sair</button>
+            </div>
+        </header>
+
+        <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
+            <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6">Cadastrar Novo Item</h2>
+            <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="edit-index" value="-1">
+                <input type="text" id="nome" placeholder="Nome do Lanche" required class="input-field p-4 rounded-xl">
+                <input type="number" id="preco" placeholder="Preço (ex: 25.50)" step="0.01" required class="input-field p-4 rounded-xl">
+                
+                <div class="md:col-span-2">
+                    <label id="label-imagem" class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Foto (Arraste ou Clique)</label>
+                    <input type="file" id="imagem_file" accept="image/*" class="input-field w-full p-4 rounded-xl border-dashed border-2 border-gray-600">
+                    <p id="msg-imagem-edit" class="text-[10px] text-gray-500 mt-1 hidden">* Deixe vazio para manter a imagem atual</p>
+                </div>
+
+                <input type="text" id="desc" placeholder="Descrição Curta" required class="input-field p-4 rounded-xl md:col-span-2">
+                
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Categoria</label>
+                    <select id="categoria" class="input-field w-full p-4 rounded-xl outline-none">
+                        <option value="Lanche">Lanche</option>
+                        <option value="Doce">Doce</option>
+                        <option value="Bebida">Bebida</option>
+                        <option value="Adicional">Adicional</option>
+                    </select>
+                </div>
+
+                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl">Salvar no Cardápio</button>
+                <button type="button" id="btn-cancelar" onclick="cancelarEdicao()" class="md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl hidden">Cancelar Edição</button>
+            </form>
+        </div>
+
+        <div id="categorias-container" class="space-y-12 mb-20">
+            </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        const form = document.getElementById('form-produto');
+        let lanches = [];
+
+        async function carregarLanchesDoBanco() {
+            const { data, error } = await supabaseClient
+                .from('lanches')
+                .select('*')
+                .order('ordem', { ascending: true }); // Carrega pela ordem salva
+            
+            if (!error) {
+                lanches = data;
+                renderCategoriasAdmin();
+            }
+        }
+
+        function renderCategoriasAdmin() {
+            const container = document.getElementById('categorias-container');
+            const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional'];
+            container.innerHTML = '';
+
+            categorias.forEach(cat => {
+                const itens = lanches.filter(l => l.categoria === cat);
+                
+                const section = document.createElement('div');
+                section.innerHTML = `
+                    <div class="flex items-center gap-2 mb-4 border-b border-gray-700 pb-2">
+                        <i data-lucide="layers" class="text-[#a3e635] w-4 h-4"></i>
+                        <h3 class="text-sm font-black uppercase tracking-widest text-gray-400">${cat}s</h3>
+                    </div>
+                    <div id="lista-${cat}" class="space-y-2">
+                        ${itens.map(item => `
+                            <div data-id="${item.id}" class="bg-[#1a1d23] p-4 rounded-2xl flex justify-between items-center border border-gray-800 shadow-sm">
+                                <div class="flex items-center gap-4">
+                                    <div class="drag-handle text-gray-600 hover:text-white transition-colors">
+                                        <i data-lucide="grip-vertical"></i>
+                                    </div>
+                                    <img src="${item.imagem}" class="w-10 h-10 rounded-lg object-cover">
+                                    <div>
+                                        <p class="font-bold uppercase italic text-xs text-white">${item.nome}</p>
+                                        <p class="text-[#a3e635] text-[10px] font-bold">R$ ${parseFloat(item.preco).toFixed(2)}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="prepararEdicaoPeloId(${item.id})" class="text-blue-400 p-2 hover:bg-blue-500/10 rounded-lg">
+                                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="removerLanchePeloId(${item.id})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+
+                // Ativar Ordenação para esta categoria
+                new Sortable(document.getElementById(`lista-${cat}`), {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: async function() {
+                        await salvarNovaOrdem();
+                    }
+                });
+            });
+            lucide.createIcons();
+        }
+
+        async function salvarNovaOrdem() {
+            const itensOrdenados = [];
+            // Percorre todas as listas para pegar a nova ordem
+            ['Lanche', 'Doce', 'Bebida', 'Adicional'].forEach(cat => {
+                const lista = document.getElementById(`lista-${cat}`);
+                const rows = Array.from(lista.children);
+                rows.forEach((row, index) => {
+                    itensOrdenados.push({ id: row.dataset.id, ordem: index });
+                });
+            });
+
+            // Atualiza no banco (Bulk update simulado item por item para simplicidade)
+            for (const item of itensOrdenados) {
+                await supabaseClient.from('lanches').update({ ordem: item.ordem }).eq('id', item.id);
+            }
+            console.log("Ordem salva!");
+        }
+
+        // --- LÓGICA DE FORMULÁRIO (Igual à sua anterior com ajustes de ID) ---
+        
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const index = document.getElementById('edit-index').value;
+            const file = document.getElementById('imagem_file').files[0];
+
+            if (index == "-1" && !file) { alert("Selecione uma imagem!"); return; }
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => salvarLanche(event.target.result, index);
+                reader.readAsDataURL(file);
+            } else {
+                const item = lanches.find(l => l.id == index);
+                salvarLanche(item.imagem, index);
+            }
+        });
+
+        async function salvarLanche(imageData, editId) {
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerText = "Salvando...";
+
+            const lancheData = {
+                nome: document.getElementById('nome').value,
+                preco: parseFloat(document.getElementById('preco').value),
+                descricao: document.getElementById('desc').value,
+                categoria: document.getElementById('categoria').value,
+                imagem: imageData
+            };
+
+            let error;
+            if (editId == "-1") {
+                const { error: insError } = await supabaseClient.from('lanches').insert([lancheData]);
+                error = insError;
+            } else {
+                const { error: updError } = await supabaseClient.from('lanches').update(lancheData).eq('id', editId);
+                error = updError;
+            }
+
+            if (!error) {
+                cancelarEdicao();
+                await carregarLanchesDoBanco();
+            }
+        }
+
+        function prepararEdicaoPeloId(id) {
+            const item = lanches.find(l => l.id == id);
+            document.getElementById('edit-index').value = id;
+            document.getElementById('nome').value = item.nome;
+            document.getElementById('preco').value = item.preco;
+            document.getElementById('desc').value = item.descricao;
+            document.getElementById('categoria').value = item.categoria;
+            
+            document.getElementById('titulo-form').innerText = "Editando: " + item.nome;
+            document.getElementById('btn-submit').innerText = "Atualizar";
+            document.getElementById('btn-cancelar').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicao() {
+            form.reset();
+            document.getElementById('edit-index').value = "-1";
+            document.getElementById('titulo-form').innerText = "Cadastrar Novo Item";
+            document.getElementById('btn-submit').innerText = "Salvar no Cardápio";
+            document.getElementById('btn-submit').disabled = false;
+            document.getElementById('btn-cancelar').classList.add('hidden');
+        }
+
+        async function removerLanchePeloId(id) {
+            if(confirm("Deseja remover este item?")) {
+                await supabaseClient.from('lanches').delete().eq('id', id);
+                await carregarLanchesDoBanco();
+            }
+        }
+
+        if (localStorage.getItem('is_admin') !== 'true') {
+            window.location.href = "login.html";
+        } else {
+            carregarLanchesDoBanco();
+        }
+
+        function logout() {
+            localStorage.removeItem('is_admin');
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>

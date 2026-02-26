@@ -4,233 +4,140 @@
     <link rel="icon" href="logo-sem-fundo.png" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrazyDog - Painel Admin</title>
+    <title>CrazyDog - Admin Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
+        :root {
+            --bg-dark: #1a1d23;
+            --card-dark: #23272f;
+            --primary-orange: #f48c2e;
+            --primary-green: #a3e635;
+        }
         body { background-color: var(--bg-dark); color: white; }
-        .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; }
+        
+        .orange-border-card { 
+            border: 2px solid #374151; 
+            transition: all 0.3s ease;
+        }
+        .orange-border-card:hover { 
+            border-color: var(--primary-orange);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px rgba(244, 140, 46, 0.3);
+        }
+        .green-border-card:hover { 
+            border-color: var(--primary-green);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px -10px rgba(163, 230, 53, 0.3);
+        }
     </style>
 </head>
-<body class="p-6">
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-10">
-            <h1 class="text-2xl font-black uppercase italic text-[#f48c2e]">Gestão de Cardápio</h1>
+<body class="font-sans min-h-screen flex flex-col">
+
+    <header class="bg-[#16191e] p-6 border-b border-gray-800 shadow-xl">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <img src="logo-sem-fundo.png" alt="Logo" class="w-30 h-12 object-contain">
+                <div>
+                    <p class="text-15px] text-gray-500 font-bold uppercase tracking-[0.2em]">Painel Administrativo</p>
+                </div>
+            </div>
             <div class="flex items-center gap-4">
                 <a href="index.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">Ver Site</a>
                 <button onclick="logout()" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg font-bold transition-colors">Sair</button>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
-            <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6">Cadastrar Novo Lanche</h2>
-            <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="hidden" id="edit-index" value="-1">
-                <input type="text" id="nome" placeholder="Nome do Lanche" required class="input-field p-4 rounded-xl">
-                <input type="number" id="preco" placeholder="Preço (ex: 25.50)" step="0.01" required class="input-field p-4 rounded-xl">
-                <div class="md:col-span-2">
-                    <label id="label-imagem" class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Foto do Lanche (Arraste ou Clique)</label>
-                    <input type="file" id="imagem_file" accept="image/*" class="input-field w-full p-4 rounded-xl border-dashed border-2 border-gray-600">
-                    <p id="msg-imagem-edit" class="text-[10px] text-gray-500 mt-1 hidden">* Deixe vazio para manter a imagem atual</p>
+    <main class="max-w-6xl mx-auto p-6 flex-1 w-full">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <a href="itens.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
+                <div class="w-20 h-20 bg-[#f48c2e]/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#f48c2e] transition-all duration-300">
+                    <i data-lucide="plus-circle" class="text-[#f48c2e] group-hover:text-white w-10 h-10"></i>
                 </div>
-                <label class="block text-xs font-bold uppercase text-[#a3e635]">Descrição</label>
-                <input type="text" id="desc" placeholder="Descrição Curta" required class="input-field p-4 rounded-xl md:col-span-2">
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Categoria</label>
-                    <select id="categoria" class="input-field w-full p-4 rounded-xl outline-none">
-                        <option value="Lanche">Lanche</option>
-                        <option value="Doce">Doce</option>
-                        <option value="Bebida">Bebida</option>
-                        <option value="Adicional">Adicional</option>
-                    </select>
+                <h3 class="text-xl font-black uppercase italic text-white mb-2">Novos Itens</h3>
+                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
+                    Cadastrar lanches, doces, bebidas e adicionais.
+                </p>
+            </a>
+
+            <a href="cupons.html" class="orange-border-card green-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
+                <div class="w-20 h-20 bg-[#a3e635]/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#a3e635] transition-all duration-300">
+                    <i data-lucide="ticket" class="text-[#a3e635] group-hover:text-[#1a1d23] w-10 h-10"></i>
                 </div>
-                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl">Salvar no Cardápio</button>
-                <button type="button" id="btn-cancelar" onclick="cancelarEdicao()" class="md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl hidden">Cancelar Edição</button>            
-            </form>
+                <h3 class="text-xl font-black uppercase italic text-white mb-2">Cupons</h3>
+                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
+                    Gerenciar códigos de desconto
+                </p>
+            </a>
+
+            <a href="entregas.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
+                <div class="w-20 h-20 bg-[#f48c2e]/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#f48c2e] transition-all duration-300">
+                    <i data-lucide="bike" class="text-[#f48c2e] group-hover:text-white w-10 h-10"></i>
+                </div>
+                
+                <h3 class="text-xl font-black uppercase italic text-white mb-2">Entregas</h3>
+                
+                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
+                    Configurar taxas e bairros para os motoboys.
+                </p>
+            </a>
+
+            <!--
+            <a href="configuracoes.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group border-gray-700">
+                <div class="w-20 h-20 bg-gray-800 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-white transition-all duration-300">
+                    <i data-lucide="settings-2" class="text-gray-400 group-hover:text-black w-10 h-10"></i>
+                </div>
+                <h3 class="text-xl font-black uppercase italic text-white mb-2">Ajustes</h3>
+                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
+                    Configurar WhatsApp, banners e horários
+                </p>
+            </a>
+            -->
+
         </div>
 
-        <div class="grid grid-cols-1 gap-4" id="lista-admin"></div>
-    </div>
+        <div class="mt-12 p-8 bg-[#23272f]/50 border border-gray-800 rounded-[2.5rem] flex flex-wrap justify-around gap-8">
+            <div class="text-center">
+                <span id="count-lanches" class="block text-3xl font-black text-[#a3e635]">--</span>
+                <span class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Itens Cadastrados</span>
+            </div>
+            <div class="border-r border-gray-800 hidden md:block"></div>
+            <div class="text-center">
+                <span class="block text-3xl font-black text-[#f48c2e]">Ativo</span>
+                <span class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Status da Loja</span>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="p-8 text-center text-gray-600 text-[10px] uppercase font-bold tracking-[0.3em]">
+        CrazyDog Admin &copy; 2026 - Sistema de Gestão
+    </footer>
 
     <script>
-        // 1. CONFIGURAÇÃO SUPABASE
+        // Inicializa os ícones do Lucide
+        lucide.createIcons();
+
+        // Configuração rápida do Supabase para o contador
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        const form = document.getElementById('form-produto');
-        let lanches = [];
-
-        // 2. CARREGAMENTO INICIAL
-        async function carregarLanchesDoBanco() {
-            const { data, error } = await supabaseClient.from('lanches').select('*').order('created_at', { ascending: false });
+        async function carregarStats() {
+            const { count, error } = await supabaseClient
+                .from('lanches')
+                .select('*', { count: 'exact', head: true });
+            
             if (!error) {
-                lanches = data;
-                renderListaAdmin();
-            } else {
-                console.error("Erro ao carregar:", error.message);
+                document.getElementById('count-lanches').innerText = count;
             }
         }
 
-        function renderListaAdmin() {
-            const container = document.getElementById('lista-admin');
-            container.innerHTML = lanches.map((item, index) => `
-                <div class="bg-[#1a1d23] p-4 rounded-2xl flex justify-between items-center border border-gray-800 mb-2">
-                    <div class="flex items-center gap-4">
-                        <img src="${item.imagem}" class="w-12 h-12 rounded-lg object-cover">
-                        <div>
-                            <p class="font-bold uppercase italic text-sm text-white">${item.nome}</p>
-                            <p class="text-[#a3e635] text-xs font-bold">R$ ${parseFloat(item.preco).toFixed(2)}</p>
-                        </div>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="prepararEdicao(${index})" class="text-blue-400 p-2 hover:bg-blue-500/10 rounded-lg transition-all">
-                            <i data-lucide="pencil"></i>
-                        </button>
-                        <button onclick="removerLanche(${index})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg transition-all">
-                            <i data-lucide="trash-2"></i>
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-            lucide.createIcons();
-        }
-
-        // 3. LOGICA DE SUBMIT
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const index = document.getElementById('edit-index').value;
-            const fileInput = document.getElementById('imagem_file');
-            const file = fileInput.files[0];
-
-            if (index == "-1" && !file) {
-                alert("Por favor, selecione uma imagem!");
-                return;
-            }
-
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    salvarLanche(event.target.result, index);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                salvarLanche(lanches[index].imagem, index);
-            }
-        });
-
-        async function salvarLanche(imageData, index) {
-            const btn = document.getElementById('btn-submit');
-            btn.disabled = true;
-            btn.innerText = "Processando...";
-
-            const lancheData = {
-                nome: document.getElementById('nome').value,
-                preco: parseFloat(document.getElementById('preco').value),
-                descricao: document.getElementById('desc').value,
-                categoria: document.getElementById('categoria').value,
-                imagem: imageData
-            };
-
-            let error;
-            if (index == "-1") {
-                const { error: insError } = await supabaseClient.from('lanches').insert([lancheData]);
-                error = insError;
-            } else {
-                const idOriginal = lanches[index].id;
-                const { error: updError } = await supabaseClient.from('lanches').update(lancheData).eq('id', idOriginal);
-                error = updError;
-            }
-
-            if (error) {
-                alert("Erro ao salvar no banco: " + error.message);
-                btn.disabled = false;
-                btn.innerText = "Tentar Novamente";
-            } else {
-                cancelarEdicao();
-                await carregarLanchesDoBanco();
-                alert("Cardápio atualizado na nuvem!");
-            }
-        }
-
-        // 4. FUNÇÕES AUXILIARES
-        function prepararEdicao(index) {
-            const item = lanches[index];
-            document.getElementById('edit-index').value = index;
-            document.getElementById('nome').value = item.nome;
-            document.getElementById('preco').value = item.preco;
-            document.getElementById('desc').value = item.descricao || ""; 
-            document.getElementById('categoria').value = item.categoria || "Lanche";
-            
-            document.getElementById('titulo-form').innerText = "Editando Lanche";
-            document.getElementById('btn-submit').innerText = "Atualizar Lanche";
-            
-            // ... resto do código de estilização (cores do botão, etc)
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function cancelarEdicao() {
-            form.reset();
-            document.getElementById('edit-index').value = "-1";
-            document.getElementById('titulo-form').innerText = "Cadastrar Novo Lanche";
-            document.getElementById('btn-submit').innerText = "Salvar no Cardápio";
-            document.getElementById('btn-submit').disabled = false;
-            document.getElementById('btn-submit').classList.replace('bg-[#a3e635]', 'bg-[#f48c2e]');
-            document.getElementById('btn-cancelar').classList.add('hidden');
-            document.getElementById('msg-imagem-edit').classList.add('hidden');
-            document.getElementById('imagem_file').required = true;
-        }
-
-        async function removerLanche(index) {
-            if(confirm("Deseja remover este item definitivamente do banco de dados?")) {
-                const idParaRemover = lanches[index].id;
-                const { error } = await supabaseClient.from('lanches').delete().eq('id', idParaRemover);
-                
-                if (error) {
-                    alert("Erro ao deletar: " + error.message);
-                } else {
-                    await carregarLanchesDoBanco();
-                }
-            }
-        }
-
-        // PROTEÇÃO DE ROTA
-        if (localStorage.getItem('is_admin') !== 'true') {
-            window.location.href = "login.html";
-        } else {
-            carregarLanchesDoBanco();
-        }
-
-        function logout() {
-            localStorage.removeItem('is_admin');
-            window.location.href = "login.html";
-        }
+        carregarStats();
     </script>
 </body>
-<footer class="mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
-    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-        
-        <div class="flex flex-col items-center md:items-start">
-            <!--
-            <h4 class="text-[#f48c2e] font-black uppercase italic tracking-tighter text-lg">CrazyDog</h4>
-            <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">O melhor dog de Itapetininga</p>
-            -->
-        </div>
-
-        <div class="text-center">
-            <p class="text-gray-400 text-xs font-medium">
-                &copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.
-            </p>
-        </div>
-
-        <div class="flex gap-4">
-            <!--
-            <a href="#" class="text-gray-500 hover:text-[#a3e635] transition-colors"><i data-lucide="instagram" size="18"></i></a>
-            <a href="#" class="text-gray-500 hover:text-[#a3e635] transition-colors"><i data-lucide="facebook" size="18"></i></a>
-            -->
-        </div>
-    </div>
-</footer>
 </html>

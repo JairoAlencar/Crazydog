@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <link rel="icon" href="logo-sem-fundo.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrazyDog - Gestão de Cupons</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
+        body { background-color: var(--bg-dark); color: white; }
+        .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; outline: none; }
+        .input-field:focus { border-color: var(--primary-green); }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-black uppercase italic text-[#f48c2e] flex items-center gap-3">
+                <i data-lucide="ticket"></i> Gestão de Cupons
+            </h1>
+            <div class="flex gap-4">
+                <a href="admin.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all uppercase font-bold">Voltar</a>
+                <button onclick="logout()" class="text-xs bg-red-600 px-4 py-2 rounded-lg font-bold uppercase">Sair</button>
+            </div>
+        </header>
+
+        <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
+            <h2 class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Gerar Novo Cupom</h2>
+            <form id="form-cupom" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="text" id="codigo" placeholder="EX: JAIRO10" required class="input-field p-4 rounded-xl font-black uppercase">
+                <input type="number" id="valor" placeholder="Valor do Desconto (R$)" step="0.01" required class="input-field p-4 rounded-xl font-bold">
+                
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Duração em Minutos (Vazio = Ilimitado)</label>
+                    <input type="number" id="duracao" placeholder="Ex: 120 (para 2 horas)" class="input-field w-full p-4 rounded-xl">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Limite de Usos (Vazio = Ilimitado)</label>
+                    <input type="number" id="limite" placeholder="Ex: 15" class="input-field w-full p-4 rounded-xl">
+                </div>
+
+                <button type="submit" class="md:col-span-2 py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.02] transition-all">
+                    Criar Cupom Ativo
+                </button>
+            </form>
+        </div>
+
+        <div id="lista-cupons" class="grid grid-cols-1 gap-4">
+            </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        document.getElementById('form-cupom').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const codigo = document.getElementById('codigo').value.toUpperCase();
+            const valor = parseFloat(document.getElementById('valor').value);
+            const duracao = document.getElementById('duracao').value;
+            const limite = document.getElementById('limite').value || 999;
+
+            let expiraEm = null;
+            if (duracao) {
+                const data = new Date();
+                data.setMinutes(data.getMinutes() + parseInt(duracao));
+                expiraEm = data.toISOString();
+            }
+
+            const { error } = await supabaseClient.from('cupons').insert([{
+                codigo, valor, expira_em: expiraEm, limite_usos: parseInt(limite), ativo: true
+            }]);
+
+            if (error) alert("Erro: " + error.message);
+            else { 
+                document.getElementById('form-cupom').reset();
+                carregarCupons(); 
+            }
+        });
+
+        async function carregarCupons() {
+            const { data, error } = await supabaseClient.from('cupons').select('*').order('id', { ascending: false });
+            if (!error) {
+                const container = document.getElementById('lista-cupons');
+                container.innerHTML = data.map(c => {
+                    const agora = new Date();
+                    const expirado = c.expira_em && new Date(c.expira_em) < agora;
+                    const esgotado = c.total_usado >= c.limite_usos;
+                    
+                    return `
+                    <div class="bg-[#1a1d23] p-6 rounded-2xl border ${expirado || esgotado ? 'border-red-900 opacity-50' : 'border-gray-800'} flex justify-between items-center">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-lg text-white">${c.codigo}</span>
+                                <span class="bg-[#a3e635]/10 text-[#a3e635] text-[10px] px-2 py-0.5 rounded-full font-bold">R$ ${parseFloat(c.valor).toFixed(2)}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-500 uppercase mt-1">
+                                ${expirado ? '🔴 EXPIRADO' : (c.expira_em ? `⏰ Até: ${new Date(c.expira_em).toLocaleString()}` : '♾️ Sem tempo')} | 
+                                ${esgotado ? '🚫 ESGOTADO' : `👥 Usos: ${c.total_usado}/${c.limite_usos}`}
+                            </p>
+                        </div>
+                        <button onclick="deletarCupom(${c.id})" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                `}).join('');
+                lucide.createIcons();
+            }
+        }
+
+        async function deletarCupom(id) {
+            if(confirm("Remover cupom?")) {
+                await supabaseClient.from('cupons').delete().eq('id', id);
+                carregarCupons();
+            }
+        }
+
+        function logout() { localStorage.removeItem('is_admin'); window.location.href = "login.html"; }
+        carregarCupons();
+    </script>
+</body>
+</html>
