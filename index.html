@@ -343,7 +343,7 @@
             lucide.createIcons();
         }
 
-        function finalizarPedido() {
+        async function finalizarPedido() {
             const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
             const valorDesconto = (subtotal * porcentagemCupom) / 100;
             const totalFinal = Math.max(0, subtotal + taxaEntrega - valorDesconto);
@@ -354,6 +354,35 @@
                 return;
             }
 
+            // --- LOGICA DE INCREMENTO DIRETO ---
+            if (nomeCupomAtivo) {
+                console.log("Tentando atualizar cupom:", nomeCupomAtivo);
+                
+                // Busca o cupom para pegar o total_usado atual
+                const { data: cupom } = await supabaseClient
+                    .from('cupons')
+                    .select('id, total_usado')
+                    .eq('codigo', nomeCupomAtivo)
+                    .single();
+
+                if (cupom) {
+                    const novoTotal = (cupom.total_usado || 0) + 1;
+                    
+                    const { error } = await supabaseClient
+                        .from('cupons')
+                        .update({ total_usado: novoTotal })
+                        .eq('id', cupom.id);
+
+                    if (error) {
+                        console.error("Erro no update:", error.message);
+                    } else {
+                        console.log("Cupom atualizado para:", novoTotal);
+                    }
+                }
+            }
+            // ----------------------------------
+
+            // Montagem da mensagem (Igual ao seu código anterior)
             let itensTexto = "";
             ['Lanche', 'Doce', 'Bebida'].forEach(cat => {
                 const itens = carrinho.filter(i => i.categoria === cat);
@@ -368,18 +397,18 @@
                 }
             });
 
-            let msg = `*CRAZY DOG - PEDIDO*\n\n------------------------------${itensTexto}------------------------------`;
-            msg += `\n*ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA NO LOCAL' : 'MOTOBOY'}`;
+            let msg = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;
+            msg += `\n🛵 *ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA NO LOCAL' : 'MOTOBOY'}`;
             if (tipoEntrega === 'delivery') {
-                msg += `\n*BAIRRO:* ${bairroNome}`;
-                msg += `\n*ENDEREÇO:* ${rua}`;
-                msg += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
+                msg += `\n📍 *BAIRRO:* ${bairroNome}`;
+                msg += `\n🏠 *ENDEREÇO:* ${rua}`;
+                msg += `\n🚚 *TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
             }
             if (porcentagemCupom > 0) {
-                msg += `\n*CUPOM:* ${nomeCupomAtivo} (${porcentagemCupom}% OFF)`;
-                msg += `\n*DESCONTO:* - R$ ${valorDesconto.toFixed(2)}`;
+                msg += `\n🎟️ *CUPOM:* ${nomeCupomAtivo} (${porcentagemCupom}% OFF)`;
+                msg += `\n📉 *DESCONTO:* - R$ ${valorDesconto.toFixed(2)}`;
             }
-            msg += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
+            msg += `\n💰 *TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
 
             window.open(`https://wa.me/5515981033150?text=${encodeURIComponent(msg)}`, '_blank');
         }
