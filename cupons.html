@@ -31,7 +31,7 @@
             <h2 class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Gerar Novo Cupom</h2>
             <form id="form-cupom" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" id="codigo" placeholder="EX: JAIRO10" required class="input-field p-4 rounded-xl font-black uppercase">
-                <input type="number" id="valor" placeholder="Valor do Desconto (R$)" step="0.01" required class="input-field p-4 rounded-xl font-bold">
+                <input type="number" id="valor" placeholder="Desconto em % (Ex: 10)" step="1" min="1" max="100" required class="input-field p-4 rounded-xl font-bold">
                 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Duração em Minutos (Vazio = Ilimitado)</label>

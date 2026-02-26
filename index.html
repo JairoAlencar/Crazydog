@@ -154,7 +154,7 @@
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let LANCHES = [], carrinho = [], descontoGlobal = 0, nomeCupomAtivo = "";
+        let LANCHES = [], carrinho = [], porcentagemCupom = 0, nomeCupomAtivo = "";
         let itemSendoEditado = null, adicionaisSelecionados = [];
         let taxaEntrega = 0, bairroNome = "", tipoEntrega = 'delivery';
 
@@ -209,16 +209,16 @@
         function renderizarCardapio() {
             const container = document.getElementById('cardapio');
             const cats = ['Lanche', 'Doce', 'Bebida'];
-            const nomesPlural = { 'Lanche': 'Lanches', 'Doce': 'Doces', 'Bebida': 'Bebidas' };
+            const nomesExibicao = { 'Lanche': 'Lanches', 'Doce': 'Doces', 'Bebida': 'Bebidas' };
             container.innerHTML = ''; 
             cats.forEach(cat => {
                 const itens = LANCHES.filter(i => i.categoria === cat);
                 if (itens.length > 0) {
-                    container.innerHTML += `<div class="col-span-full mt-10 mb-4 border-l-4 border-[#f48c2e] pl-4"><h3 class="text-2xl font-black italic text-[#a3e635]">${nomesPlural[cat]}</h3></div>`;
+                    container.innerHTML += `<div class="col-span-full mt-10 mb-4 border-l-4 border-[#f48c2e] pl-4"><h3 class="text-2xl font-black italic text-[#a3e635]">${nomesExibicao[cat]}</h3></div>`;
                     itens.forEach(item => {
                         container.innerHTML += `
                         <div class="orange-border-card bg-[#2d3139] overflow-hidden flex flex-col shadow-lg">
-                            <div class="h-48 overflow-hidden"><img src="${item.imagem}" class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform"></div>
+                            <div class="h-48 overflow-hidden"><img src="${item.imagem}" class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500"></div>
                             <div class="p-6 flex-1 flex flex-col">
                                 <h4 class="font-black uppercase italic">${item.nome}</h4>
                                 <p class="text-gray-400 text-xs mt-2 flex-1">${item.descricao || ''}</p>
@@ -275,18 +275,40 @@
         function confirmarPersonalizacao() {
             const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
             carrinho.push({ ...itemSendoEditado, adicionais: [...adicionaisSelecionados], totalItem: total, observacao: "" });
-            fecharModal(); atualizarCarrinho(); toggleCart();
+            fecharModal(); atualizarCarrinho(); if(!document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
         }
 
         function fecharModal() { document.getElementById('modal-custom').classList.add('hidden'); }
 
+        async function aplicarCupom() {
+            const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
+            const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
+            const msg = document.getElementById('cupom-msg');
+            const agora = new Date();
+
+            if (data && (!data.expira_em || new Date(data.expira_em) > agora) && data.total_usado < data.limite_usos) {
+                porcentagemCupom = parseFloat(data.valor);
+                nomeCupomAtivo = data.codigo;
+                msg.innerText = `CUPOM OK: ${porcentagemCupom}% OFF`;
+                msg.className = "text-[10px] mt-1 text-[#a3e635] font-bold block";
+            } else {
+                porcentagemCupom = 0; nomeCupomAtivo = ""; msg.innerText = "CUPOM INVÁLIDO OU EXPIRADO";
+                msg.className = "text-[10px] mt-1 text-red-500 font-bold block";
+            }
+            atualizarCarrinho();
+        }
+
         function atualizarCarrinho() {
             const container = document.getElementById('cart-items');
-            if(carrinho.length === 0) {
+            const totalEl = document.getElementById('cart-total');
+            const countEl = document.getElementById('cart-count');
+            const btnFinalizar = document.getElementById('btn-finalizar');
+
+            if (carrinho.length === 0) {
                 container.innerHTML = '<p class="text-gray-600 text-center uppercase font-bold text-[10px] mt-10">Carrinho vazio</p>';
-                document.getElementById('btn-finalizar').disabled = true;
-                document.getElementById('cart-total').innerText = "R$ 0,00";
-                document.getElementById('cart-count').classList.add('hidden');
+                btnFinalizar.disabled = true;
+                totalEl.innerText = "R$ 0,00";
+                countEl.classList.add('hidden');
             } else {
                 container.innerHTML = carrinho.map((item, index) => `
                     <div class="bg-[#23272f] p-6 rounded-2xl flex flex-col gap-3 shadow-md border border-gray-800">
@@ -294,43 +316,37 @@
                             <div>
                                 <p class="font-black text-white uppercase italic tracking-tight">${item.nome}</p>
                                 <p class="text-[#f48c2e] font-black text-sm">R$ ${(item.totalItem || item.preco).toFixed(2)}</p>
-                                ${item.adicionais?.length ? `<p class="text-[9px] text-gray-500 uppercase font-bold mt-1 tracking-widest">+ ${item.adicionais.map(a=>a.nome).join(', ')}</p>` : ''}
+                                ${item.adicionais?.length ? `<p class="text-[9px] text-gray-500 uppercase font-bold mt-1 tracking-widest">+ ${item.adicionais.map(a => a.nome).join(', ')}</p>` : ''}
                             </div>
                             <button onclick="removerDoCarrinho(${index})" class="text-red-500 hover:scale-110 transition-transform"><i data-lucide="trash-2" size="18"></i></button>
                         </div>
                         <textarea onchange="salvarObservacao(${index}, this.value)" class="bg-[#1a1d23] p-3 rounded-xl text-xs outline-none border border-gray-700 focus:border-[#a3e635] min-h-[60px] resize-none">${item.observacao || ''}</textarea>
                     </div>`).join('');
-                
+
                 const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
-                const totalFinal = Math.max(0, subtotal + taxaEntrega - descontoGlobal);
-                document.getElementById('cart-total').innerText = `R$ ${totalFinal.toFixed(2)}`;
-                document.getElementById('btn-finalizar').disabled = false;
-                document.getElementById('btn-finalizar').className = "w-full py-4 rounded-2xl font-black uppercase bg-[#a3e635] text-[#1a1d23] shadow-lg hover:shadow-[#a3e635]/20 transition-all";
-                document.getElementById('cart-count').classList.remove('hidden');
-                document.getElementById('cart-count').innerText = carrinho.length;
+                const valorDesconto = (subtotal * porcentagemCupom) / 100;
+                
+                if (porcentagemCupom > 0) {
+                    document.getElementById('cupom-msg').innerText = `DESCONTO: - R$ ${valorDesconto.toFixed(2)} (${porcentagemCupom}%)`;
+                    document.getElementById('cupom-msg').classList.remove('hidden');
+                }
+
+                const totalFinal = Math.max(0, subtotal + taxaEntrega - valorDesconto);
+                totalEl.innerText = `R$ ${totalFinal.toFixed(2)}`;
+                document.getElementById('txt-frete').innerText = `Frete: R$ ${taxaEntrega.toFixed(2)}`;
+                
+                btnFinalizar.disabled = false;
+                btnFinalizar.className = "w-full py-4 rounded-2xl font-black uppercase bg-[#a3e635] text-[#1a1d23] shadow-lg transition-all";
+                countEl.classList.remove('hidden');
+                countEl.innerText = carrinho.length;
             }
             lucide.createIcons();
         }
 
-        async function aplicarCupom() {
-            const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
-            const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
-            const msg = document.getElementById('cupom-msg');
-            if (data && (!data.expira_em || new Date(data.expira_em) > new Date())) {
-                descontoGlobal = parseFloat(data.valor);
-                nomeCupomAtivo = data.codigo;
-                msg.innerText = `CUPOM OK: - R$ ${descontoGlobal.toFixed(2)}`;
-                msg.className = "text-[10px] mt-1 text-[#a3e635] font-bold block";
-            } else {
-                descontoGlobal = 0; msg.innerText = "CUPOM INVÁLIDO";
-                msg.className = "text-[10px] mt-1 text-red-500 font-bold block";
-            }
-            atualizarCarrinho();
-        }
-
         function finalizarPedido() {
             const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
-            const totalFinal = Math.max(0, subtotal + taxaEntrega - descontoGlobal);
+            const valorDesconto = (subtotal * porcentagemCupom) / 100;
+            const totalFinal = Math.max(0, subtotal + taxaEntrega - valorDesconto);
             const rua = document.getElementById('rua').value;
             
             if (tipoEntrega === 'delivery' && (taxaEntrega === 0 || !rua)) {
@@ -352,14 +368,17 @@
                 }
             });
 
-            let msg = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;
+            let msg = `*CRAZY DOG - PEDIDO*\n\n------------------------------${itensTexto}------------------------------`;
             msg += `\n*ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA NO LOCAL' : 'MOTOBOY'}`;
             if (tipoEntrega === 'delivery') {
-                msg += `\n*ENDEREÇO:* ${rua}`;
                 msg += `\n*BAIRRO:* ${bairroNome}`;
+                msg += `\n*ENDEREÇO:* ${rua}`;
                 msg += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
             }
-            if (descontoGlobal > 0) msg += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${descontoGlobal.toFixed(2)})`;
+            if (porcentagemCupom > 0) {
+                msg += `\n*CUPOM:* ${nomeCupomAtivo} (${porcentagemCupom}% OFF)`;
+                msg += `\n*DESCONTO:* - R$ ${valorDesconto.toFixed(2)}`;
+            }
             msg += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
 
             window.open(`https://wa.me/5515981033150?text=${encodeURIComponent(msg)}`, '_blank');
