@@ -9,28 +9,15 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root {
-            --bg-dark: #1a1d23;
-            --card-dark: #23272f;
-            --primary-orange: #f48c2e;
-            --primary-green: #a3e635;
-        }
+        :root { --bg-dark: #1a1d23; --card-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
         body { background-color: var(--bg-dark); color: white; }
-        
-        .orange-border-card { 
-            border: 2px solid #374151; 
-            transition: all 0.3s ease;
-        }
+        .orange-border-card { border: 2px solid #374151; transition: all 0.3s ease; }
         .orange-border-card:hover { 
-            border-color: var(--primary-orange);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px -10px rgba(244, 140, 46, 0.3);
+            border-color: var(--primary-orange); 
+            transform: translateY(-5px); 
+            box-shadow: 0 10px 30px -10px rgba(244, 140, 46, 0.3); 
         }
-        .green-border-card:hover { 
-            border-color: var(--primary-green);
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px -10px rgba(163, 230, 53, 0.3);
-        }
+        .stat-card { background: rgba(35, 39, 47, 0.5); border: 1px solid #374151; padding: 1.2rem; border-radius: 1.5rem; text-align: center; }
     </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col">
@@ -39,102 +26,113 @@
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <img src="logo-sem-fundo.png" alt="Logo" class="w-30 h-12 object-contain">
-                <div>
-                    <p class="text-15px] text-gray-500 font-bold uppercase tracking-[0.2em]">Painel Administrativo</p>
-                </div>
+                <div><p class="text-[15px] text-gray-500 font-bold uppercase tracking-[0.2em]">Painel Administrativo</p></div>
             </div>
             <div class="flex items-center gap-4">
-                <a href="index.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors">Ver Site</a>
-                <button onclick="logout()" class="text-xs bg-red-600 hover:bg-red-700 px-3 py-2 rounded-lg font-bold transition-colors">Sair</button>
+                <a href="index.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors uppercase font-bold text-white">Ver Site</a>
+                <button onclick="logout()" class="text-xs bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg font-bold transition-colors uppercase text-white">Sair</button>
             </div>
         </div>
     </header>
 
     <main class="max-w-6xl mx-auto p-6 flex-1 w-full">
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <a href="itens.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
-                <div class="w-20 h-20 bg-[#f48c2e]/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#f48c2e] transition-all duration-300">
-                    <i data-lucide="plus-circle" class="text-[#f48c2e] group-hover:text-white w-10 h-10"></i>
+                <div class="w-16 h-16 bg-[#f48c2e]/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-[#f48c2e] transition-all">
+                    <i data-lucide="plus-circle" class="text-[#f48c2e] group-hover:text-white"></i>
                 </div>
-                <h3 class="text-xl font-black uppercase italic text-white mb-2">Novos Itens</h3>
-                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
-                    Cadastrar lanches, doces, bebidas e adicionais.
-                </p>
+                <h3 class="text-lg font-black uppercase italic">Novos Itens</h3>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-2">Cardápio & Adicionais</p>
             </a>
 
-            <a href="cupons.html" class="orange-border-card green-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
-                <div class="w-20 h-20 bg-[#a3e635]/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#a3e635] transition-all duration-300">
-                    <i data-lucide="ticket" class="text-[#a3e635] group-hover:text-[#1a1d23] w-10 h-10"></i>
+            <a href="cupons.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
+                <div class="w-16 h-16 bg-[#a3e635]/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-[#a3e635] transition-all">
+                    <i data-lucide="ticket" class="text-[#a3e635] group-hover:text-[#1a1d23]"></i>
                 </div>
-                <h3 class="text-xl font-black uppercase italic text-white mb-2">Cupons</h3>
-                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
-                    Gerenciar códigos de desconto
-                </p>
+                <h3 class="text-lg font-black uppercase italic">Cupons</h3>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-2">Descontos Ativos</p>
             </a>
 
             <a href="entregas.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
-                <div class="w-20 h-20 bg-[#f48c2e]/10 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-[#f48c2e] transition-all duration-300">
-                    <i data-lucide="bike" class="text-[#f48c2e] group-hover:text-white w-10 h-10"></i>
+                <div class="w-16 h-16 bg-[#f48c2e]/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-[#f48c2e] transition-all">
+                    <i data-lucide="bike" class="text-[#f48c2e] group-hover:text-white"></i>
                 </div>
-                
-                <h3 class="text-xl font-black uppercase italic text-white mb-2">Entregas</h3>
-                
-                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
-                    Configurar taxas e bairros para os motoboys.
-                </p>
+                <h3 class="text-lg font-black uppercase italic">Entregas</h3>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-2">Bairros & Taxas</p>
             </a>
-
-            <!--
-            <a href="configuracoes.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group border-gray-700">
-                <div class="w-20 h-20 bg-gray-800 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-white transition-all duration-300">
-                    <i data-lucide="settings-2" class="text-gray-400 group-hover:text-black w-10 h-10"></i>
-                </div>
-                <h3 class="text-xl font-black uppercase italic text-white mb-2">Ajustes</h3>
-                <p class="text-gray-500 text-xs leading-relaxed uppercase font-bold tracking-wider">
-                    Configurar WhatsApp, banners e horários
-                </p>
-            </a>
-            -->
-
         </div>
 
-        <div class="mt-12 p-8 bg-[#23272f]/50 border border-gray-800 rounded-[2.5rem] flex flex-wrap justify-around gap-8">
-            <div class="text-center">
-                <span id="count-lanches" class="block text-3xl font-black text-[#a3e635]">--</span>
-                <span class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Itens Cadastrados</span>
+        <h2 class="text-xl font-black uppercase italic text-[#a3e635] mb-6 flex items-center gap-2">
+            <i data-lucide="bar-chart-3" size="20"></i> Resumo do Inventário
+        </h2>
+        
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="stat-card">
+                <span id="count-lanches" class="block text-2xl font-black text-white">--</span>
+                <span class="text-[9px] uppercase font-bold text-gray-500 tracking-tighter">Lanches</span>
             </div>
-            <div class="border-r border-gray-800 hidden md:block"></div>
-            <div class="text-center">
-                <span class="block text-3xl font-black text-[#f48c2e]">Ativo</span>
-                <span class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Status da Loja</span>
+            <div class="stat-card">
+                <span id="count-doces" class="block text-2xl font-black text-white">--</span>
+                <span class="text-[9px] uppercase font-bold text-gray-500 tracking-tighter">Doces</span>
+            </div>
+            <div class="stat-card">
+                <span id="count-bebidas" class="block text-2xl font-black text-white">--</span>
+                <span class="text-[9px] uppercase font-bold text-gray-500 tracking-tighter">Bebidas</span>
+            </div>
+            <div class="stat-card border-[#f48c2e]/30">
+                <span id="count-adicionais" class="block text-2xl font-black text-[#f48c2e]">--</span>
+                <span class="text-[9px] uppercase font-bold text-gray-500 tracking-tighter">Adicionais</span>
+            </div>
+            <div class="stat-card border-[#a3e635]/30">
+                <span id="count-cupons" class="block text-2xl font-black text-[#a3e635]">--</span>
+                <span class="text-[9px] uppercase font-bold text-gray-500 tracking-tighter">Cupons Ativos</span>
             </div>
         </div>
 
     </main>
 
-    <footer class="p-8 text-center text-gray-600 text-[10px] uppercase font-bold tracking-[0.3em]">
-        CrazyDog Admin &copy; 2026 - Sistema de Gestão
+    <footer class="relative z-20 mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-gray-400 text-xs font-medium">
+                &copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.
+            </p>
+        </div>
     </footer>
 
     <script>
-        // Inicializa os ícones do Lucide
         lucide.createIcons();
 
-        // Configuração rápida do Supabase para o contador
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         async function carregarStats() {
-            const { count, error } = await supabaseClient
-                .from('lanches')
-                .select('*', { count: 'exact', head: true });
-            
-            if (!error) {
-                document.getElementById('count-lanches').innerText = count;
-            }
+            const getCount = async (table, filterCol = null, filterVal = null) => {
+                let query = supabaseClient.from(table).select('*', { count: 'exact', head: true });
+                if (filterCol) query = query.eq(filterCol, filterVal);
+                const { count } = await query;
+                return count || 0;
+            };
+
+            const [lanches, doces, bebidas, adicionais, cupons] = await Promise.all([
+                getCount('lanches', 'categoria', 'Lanche'),
+                getCount('lanches', 'categoria', 'Doce'),
+                getCount('lanches', 'categoria', 'Bebida'),
+                getCount('lanches', 'categoria', 'Adicional'),
+                getCount('cupons', 'ativo', true)
+            ]);
+
+            document.getElementById('count-lanches').innerText = lanches;
+            document.getElementById('count-doces').innerText = doces;
+            document.getElementById('count-bebidas').innerText = bebidas;
+            document.getElementById('count-adicionais').innerText = adicionais;
+            document.getElementById('count-cupons').innerText = cupons;
+        }
+
+        function logout() {
+            localStorage.removeItem('is_admin');
+            window.location.href = "login.html";
         }
 
         carregarStats();
