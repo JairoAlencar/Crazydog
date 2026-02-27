@@ -9,9 +9,11 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Variáveis de Cores e Estilos Globais */
         :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
         body { background-color: var(--bg-dark); color: white; }
         .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; outline: none; }
+        /* Realce de foco no input para melhor acessibilidade */
         .input-field:focus { border-color: var(--primary-orange); }
     </style>
 </head>
@@ -28,56 +30,141 @@
         </header>
 
         <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
+            <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Cadastrar Região</h2>
             <form id="form-taxa" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="taxa-id" value="">
+                
                 <input type="text" id="bairro" placeholder="Nome do Bairro" required class="input-field p-4 rounded-xl font-bold">
                 <input type="number" id="valor" placeholder="Taxa (R$)" step="0.01" required class="input-field p-4 rounded-xl font-bold">
-                <button type="submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl hover:scale-[1.02] transition-all">
+                
+                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl hover:scale-[1.02] transition-all">
                     Salvar Bairro
+                </button>
+                <button type="button" id="btn-cancelar" onclick="resetarFormulario()" class="hidden md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl">
+                    Cancelar Edição
                 </button>
             </form>
         </div>
 
-        <div id="lista-taxas" class="grid grid-cols-1 gap-4"></div>
+        <div id="lista-taxas" class="grid grid-cols-1 gap-4 mb-20"></div>
     </div>
 
     <script>
+        // Inicialização do Cliente Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+        let taxasLocais = []; // Cache para manipulação de dados em tela
+
+        /**
+         * Gerencia o envio do formulário.
+         * Decide entre criar um novo bairro ou atualizar um existente com base no ID presente.
+         */
         document.getElementById('form-taxa').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const id = document.getElementById('taxa-id').value;
             const bairro = document.getElementById('bairro').value;
             const valor = parseFloat(document.getElementById('valor').value);
 
-            const { error } = await supabaseClient.from('taxas_entrega').upsert([{ bairro, valor }]);
-            if (error) alert(error.message);
-            else { document.getElementById('form-taxa').reset(); carregarTaxas(); }
+            const dadosBairro = { bairro, valor };
+
+            let query;
+            if (id) {
+                // Modo Edição
+                query = await supabaseClient.from('taxas_entrega').update(dadosBairro).eq('id', id);
+            } else {
+                // Modo Cadastro
+                query = await supabaseClient.from('taxas_entrega').insert([dadosBairro]);
+            }
+
+            if (query.error) {
+                alert("Erro ao salvar: " + query.error.message);
+            } else { 
+                resetarFormulario(); 
+                carregarTaxas(); 
+            }
         });
 
+        /**
+         * Busca todos os bairros do banco e os exibe em ordem alfabética.
+         */
         async function carregarTaxas() {
             const { data, error } = await supabaseClient.from('taxas_entrega').select('*').order('bairro');
             if (!error) {
+                taxasLocais = data; // Atualiza o cache local
                 const container = document.getElementById('lista-taxas');
                 container.innerHTML = data.map(t => `
-                    <div class="bg-[#1a1d23] p-5 rounded-2xl border border-gray-800 flex justify-between items-center">
+                    <div class="bg-[#1a1d23] p-5 rounded-2xl border border-gray-800 flex justify-between items-center shadow-lg">
                         <div>
                             <span class="font-black uppercase text-white">${t.bairro}</span>
                             <p class="text-[#a3e635] font-bold text-xs">Taxa: R$ ${parseFloat(t.valor).toFixed(2)}</p>
                         </div>
-                        <button onclick="deletarTaxa(${t.id})" class="text-red-500 p-2"><i data-lucide="trash-2"></i></button>
+                        <div class="flex gap-2">
+                            <button onclick="prepararEdicao(${t.id})" class="text-blue-400 hover:bg-blue-500/10 p-2 rounded-lg transition-colors">
+                                <i data-lucide="pencil" size="18"></i>
+                            </button>
+                            <button onclick="deletarTaxa(${t.id})" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors">
+                                <i data-lucide="trash-2" size="18"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('');
-                lucide.createIcons();
+                lucide.createIcons(); // Ativa os ícones injetados no HTML
             }
         }
 
+        /**
+         * Carrega os dados do bairro selecionado no formulário para edição.
+         */
+        function prepararEdicao(id) {
+            const taxa = taxasLocais.find(t => t.id === id);
+            if (!taxa) return;
+
+            document.getElementById('taxa-id').value = taxa.id;
+            document.getElementById('bairro').value = taxa.bairro;
+            document.getElementById('valor').value = taxa.valor;
+
+            // Feedback visual de edição
+            document.getElementById('titulo-form').innerText = "Editando Bairro: " + taxa.bairro;
+            document.getElementById('btn-submit').innerText = "Atualizar Bairro";
+            document.getElementById('btn-cancelar').classList.remove('hidden');
+            
+            // Rola a tela para o formulário
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Limpa o formulário e retorna ao estado de cadastro original.
+         */
+        function resetarFormulario() {
+            document.getElementById('form-taxa').reset();
+            document.getElementById('taxa-id').value = "";
+            document.getElementById('titulo-form').innerText = "Cadastrar Região";
+            document.getElementById('btn-submit').innerText = "Salvar Bairro";
+            document.getElementById('btn-cancelar').classList.add('hidden');
+        }
+
+        /**
+         * Remove o bairro do sistema após confirmação.
+         */
         async function deletarTaxa(id) {
-            if(confirm("Remover este bairro?")) {
-                await supabaseClient.from('taxas_entrega').delete().eq('id', id);
-                carregarTaxas();
+            if(confirm("Deseja remover este bairro e sua respectiva taxa?")) {
+                const { error } = await supabaseClient.from('taxas_entrega').delete().eq('id', id);
+                if (error) alert("Erro ao deletar: " + error.message);
+                else carregarTaxas();
             }
         }
+
+        /**
+         * Remove sessão e redireciona ao login.
+         */
+        function logout() { 
+            localStorage.removeItem('is_admin'); 
+            window.location.href = "login.html"; 
+        }
+
+        // Execução inicial
         carregarTaxas();
     </script>
 </body>

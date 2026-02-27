@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Variáveis de cores globais da marca */
         :root {
             --bg-dark: #23272f;
             --card-dark: #2d3139;
@@ -16,10 +17,13 @@
             --primary-green: #a3e635;
         }
         body { background-color: var(--bg-dark); color: white; }
+        
+        /* Estilização da Gaveta do Carrinho (Cart Drawer) */
         .cart-drawer { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
         .cart-drawer.open { transform: translateX(0); }
         .orange-border-card { border: 2px solid var(--primary-orange); border-radius: 1.5rem; }
         
+        /* Animação de pulso para a logo no banner */
         @keyframes float-pulse {
             0% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(244, 140, 46, 0.4)); }
             50% { transform: scale(1.05) translateY(-10px); filter: drop-shadow(0 0 40px rgba(244, 140, 46, 0.8)); }
@@ -27,6 +31,7 @@
         }
         .animate-logo { animation: float-pulse 3s infinite ease-in-out; }
         
+        /* Animação para mensagens de ajuda do avatar */
         @keyframes fade-slide {
             0%, 10% { opacity: 0; transform: translateX(-10px); }
             20%, 80% { opacity: 1; transform: translateX(0); }
@@ -150,25 +155,46 @@
     </div>
 
     <script>
+        // Configurações do Supabase (URL e Chave Pública)
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        let LANCHES = [], carrinho = [], porcentagemCupom = 0, nomeCupomAtivo = "";
-        let itemSendoEditado = null, adicionaisSelecionados = [];
-        let taxaEntrega = 0, bairroNome = "", tipoEntrega = 'delivery';
+        // Estado Global da Aplicação
+        let LANCHES = [];           // Array com todos os produtos do banco
+        let carrinho = [];          // Itens selecionados pelo usuário
+        let porcentagemCupom = 0;   // Valor do desconto em %
+        let nomeCupomAtivo = "";    // Código do cupom aplicado
+        let itemSendoEditado = null; // Item que abriu a modal de adicionais
+        let adicionaisSelecionados = []; // Temporário para a modal
+        let taxaEntrega = 0;        // Valor da entrega do bairro selecionado
+        let bairroNome = "";        // Nome do bairro selecionado
+        let tipoEntrega = 'delivery'; // 'delivery' ou 'retirada'
 
+        // Ciclo de Vida: Carregamento Inicial
         document.addEventListener('DOMContentLoaded', () => {
             buscarLanchesDoBanco();
             carregarBairros();
             lucide.createIcons();
         });
 
+        // Recupera produtos do Supabase
         async function buscarLanchesDoBanco() {
-            const { data } = await supabaseClient.from('lanches').select('*').order('created_at', { ascending: false });
-            if (data) { LANCHES = data; renderizarCardapio(); }
+            // Adicionamos o .order para respeitar a numeração da coluna 'ordem'
+            const { data, error } = await supabaseClient
+                .from('lanches')
+                .select('*')
+                .order('ordem', { ascending: true }); // Garante a sequência: 0, 1, 2...
+
+            if (!error) { 
+                LANCHES = data; 
+                renderizarCardapio(); 
+            } else {
+                console.error("Erro ao carregar cardápio:", error.message);
+            }
         }
 
+        // Recupera bairros e taxas de entrega
         async function carregarBairros() {
             const { data } = await supabaseClient.from('taxas_entrega').select('*').order('bairro');
             if (data) {
@@ -178,6 +204,7 @@
             }
         }
 
+        // Alterna entre Motoboy e Retirada
         function setTipoEntrega(tipo) {
             tipoEntrega = tipo;
             const secao = document.getElementById('secao-endereco');
@@ -198,6 +225,7 @@
             atualizarCarrinho();
         }
 
+        // Atualiza taxa de entrega baseada no bairro do select
         function selecionarBairro() {
             const select = document.getElementById('select-bairro');
             taxaEntrega = parseFloat(select.value);
@@ -206,6 +234,7 @@
             atualizarCarrinho();
         }
 
+        // Constrói o HTML do cardápio separando por categorias
         function renderizarCardapio() {
             const container = document.getElementById('cardapio');
             const cats = ['Lanche', 'Doce', 'Bebida'];
@@ -234,6 +263,7 @@
             lucide.createIcons();
         }
 
+        // Lógica para adicionar item: Abre modal se for lanche, senão vai direto ao carrinho
         function adicionarNoCarrinho(id) {
             const item = LANCHES.find(l => l.id == id);
             if (!item) return;
@@ -261,17 +291,20 @@
             lucide.createIcons();
         }
 
+        // Gerencia seleção de checkboxes na modal
         function toggleAdicional(id, preco, nome, isChecked) {
             if (isChecked) adicionaisSelecionados.push({ id, preco: parseFloat(preco), nome });
             else adicionaisSelecionados = adicionaisSelecionados.filter(a => a.id !== id);
             atualizarTotalModal();
         }
 
+        // Calcula total em tempo real dentro da modal
         function atualizarTotalModal() {
             const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
             document.getElementById('modal-total-final').innerText = `R$ ${total.toFixed(2)}`;
         }
 
+        // Finaliza edição da modal e insere no carrinho
         function confirmarPersonalizacao() {
             const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
             carrinho.push({ ...itemSendoEditado, adicionais: [...adicionaisSelecionados], totalItem: total, observacao: "" });
@@ -280,6 +313,7 @@
 
         function fecharModal() { document.getElementById('modal-custom').classList.add('hidden'); }
 
+        // Valida cupom no Supabase (verifica existência, data e limite de usos)
         async function aplicarCupom() {
             const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
             const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
@@ -298,6 +332,7 @@
             atualizarCarrinho();
         }
 
+        // Atualiza a visualização da gaveta de itens e calcula o total final (Subtotal - Desconto + Frete)
         function atualizarCarrinho() {
             const container = document.getElementById('cart-items');
             const totalEl = document.getElementById('cart-total');
@@ -343,6 +378,7 @@
             lucide.createIcons();
         }
 
+        // Finaliza o pedido, registra o uso do cupom no DB e envia para o WhatsApp
         async function finalizarPedido() {
             const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
             const valorDesconto = (subtotal * porcentagemCupom) / 100;
@@ -354,35 +390,14 @@
                 return;
             }
 
-            // --- LOGICA DE INCREMENTO DIRETO ---
+            // Incrementa contador de uso do cupom no banco antes de abrir o link
             if (nomeCupomAtivo) {
-                console.log("Tentando atualizar cupom:", nomeCupomAtivo);
-                
-                // Busca o cupom para pegar o total_usado atual
-                const { data: cupom } = await supabaseClient
-                    .from('cupons')
-                    .select('id, total_usado')
-                    .eq('codigo', nomeCupomAtivo)
-                    .single();
-
+                const { data: cupom } = await supabaseClient.from('cupons').select('id, total_usado').eq('codigo', nomeCupomAtivo).single();
                 if (cupom) {
-                    const novoTotal = (cupom.total_usado || 0) + 1;
-                    
-                    const { error } = await supabaseClient
-                        .from('cupons')
-                        .update({ total_usado: novoTotal })
-                        .eq('id', cupom.id);
-
-                    if (error) {
-                        console.error("Erro no update:", error.message);
-                    } else {
-                        console.log("Cupom atualizado para:", novoTotal);
-                    }
+                    await supabaseClient.from('cupons').update({ total_usado: (cupom.total_usado || 0) + 1 }).eq('id', cupom.id);
                 }
             }
-            // ----------------------------------
 
-            // Montagem da mensagem (Igual ao seu código anterior)
             let itensTexto = "";
             ['Lanche', 'Doce', 'Bebida'].forEach(cat => {
                 const itens = carrinho.filter(i => i.categoria === cat);
@@ -397,27 +412,30 @@
                 }
             });
 
+            // Montagem da mensagem estruturada para o WhatsApp
             let msg = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;
-            msg += `\n🛵 *ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA NO LOCAL' : 'MOTOBOY'}`;
+            msg += `\n*ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA NO LOCAL' : 'MOTOBOY'}`;
             if (tipoEntrega === 'delivery') {
-                msg += `\n📍 *BAIRRO:* ${bairroNome}`;
-                msg += `\n🏠 *ENDEREÇO:* ${rua}`;
-                msg += `\n🚚 *TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
+                msg += `\n*BAIRRO:* ${bairroNome}`;
+                msg += `\n*ENDEREÇO:* ${rua}`;
+                msg += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
             }
             if (porcentagemCupom > 0) {
-                msg += `\n🎟️ *CUPOM:* ${nomeCupomAtivo} (${porcentagemCupom}% OFF)`;
-                msg += `\n📉 *DESCONTO:* - R$ ${valorDesconto.toFixed(2)}`;
+                msg += `\n*CUPOM:* ${nomeCupomAtivo} (${porcentagemCupom}% OFF)`;
+                msg += `\n*DESCONTO:* - R$ ${valorDesconto.toFixed(2)}`;
             }
-            msg += `\n💰 *TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
+            msg += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
 
             window.open(`https://wa.me/5515981033150?text=${encodeURIComponent(msg)}`, '_blank');
         }
 
+        // Abre/Fecha a gaveta do carrinho e ajusta visibilidade do avatar
         function toggleCart() {
             const isOpen = document.getElementById('cart-drawer').classList.toggle('open');
             document.getElementById('cart-overlay').classList.toggle('hidden');
             document.getElementById('avatar-container').style.opacity = isOpen ? "0" : "1";
         }
+        
         function removerDoCarrinho(index) { carrinho.splice(index, 1); atualizarCarrinho(); }
         function salvarObservacao(index, texto) { carrinho[index].observacao = texto; }
     </script>

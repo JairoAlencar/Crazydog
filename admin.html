@@ -9,14 +9,19 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Variáveis de tema para manter consistência visual com o cardápio */
         :root { --bg-dark: #1a1d23; --card-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
         body { background-color: var(--bg-dark); color: white; }
+        
+        /* Estilização dos Cards de Navegação com efeitos de hover e sombra */
         .orange-border-card { border: 2px solid #374151; transition: all 0.3s ease; }
         .orange-border-card:hover { 
             border-color: var(--primary-orange); 
             transform: translateY(-5px); 
             box-shadow: 0 10px 30px -10px rgba(244, 140, 46, 0.3); 
         }
+        
+        /* Estilização dos Cards de Estatísticas (Stats) */
         .stat-card { background: rgba(35, 39, 47, 0.5); border: 1px solid #374151; padding: 1.2rem; border-radius: 1.5rem; text-align: center; }
     </style>
 </head>
@@ -101,13 +106,20 @@
     </footer>
 
     <script>
+        // Inicializa os ícones do Lucide no carregamento
         lucide.createIcons();
 
+        // Configuração de acesso ao Banco de Dados Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+        /**
+         * Realiza a contagem de itens em diversas tabelas e categorias
+         * Utiliza Promise.all para disparar todas as requisições simultaneamente (otimização de tempo)
+         */
         async function carregarStats() {
+            // Função utilitária interna para facilitar o SELECT COUNT
             const getCount = async (table, filterCol = null, filterVal = null) => {
                 let query = supabaseClient.from(table).select('*', { count: 'exact', head: true });
                 if (filterCol) query = query.eq(filterCol, filterVal);
@@ -115,6 +127,7 @@
                 return count || 0;
             };
 
+            // Disparo paralelo das consultas
             const [lanches, doces, bebidas, adicionais, cupons] = await Promise.all([
                 getCount('lanches', 'categoria', 'Lanche'),
                 getCount('lanches', 'categoria', 'Doce'),
@@ -123,6 +136,7 @@
                 getCount('cupons', 'ativo', true)
             ]);
 
+            // Atualização do DOM com os valores reais
             document.getElementById('count-lanches').innerText = lanches;
             document.getElementById('count-doces').innerText = doces;
             document.getElementById('count-bebidas').innerText = bebidas;
@@ -130,11 +144,15 @@
             document.getElementById('count-cupons').innerText = cupons;
         }
 
+        /**
+         * Limpa o token de administrador do navegador e redireciona para a tela de login
+         */
         function logout() {
             localStorage.removeItem('is_admin');
             window.location.href = "login.html";
         }
 
+        // Execução automática ao carregar a página
         carregarStats();
     </script>
 </body>

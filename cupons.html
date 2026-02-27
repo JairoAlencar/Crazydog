@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Variáveis de Cores e Estilos Base */
         :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
         body { background-color: var(--bg-dark); color: white; }
         .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; outline: none; }
@@ -28,64 +29,96 @@
         </header>
 
         <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
-            <h2 class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Gerar Novo Cupom</h2>
+            <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Gerar Novo Cupom</h2>
             <form id="form-cupom" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input type="hidden" id="cupom-id" value="">
+                
                 <input type="text" id="codigo" placeholder="EX: JAIRO10" required class="input-field p-4 rounded-xl font-black uppercase">
                 <input type="number" id="valor" placeholder="Desconto em % (Ex: 10)" step="1" min="1" max="100" required class="input-field p-4 rounded-xl font-bold">
                 
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Duração em Minutos (Vazio = Ilimitado)</label>
-                    <input type="number" id="duracao" placeholder="Ex: 120 (para 2 horas)" class="input-field w-full p-4 rounded-xl">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Duração em Minutos (Vazio = Manter/Ilimitado)</label>
+                    <input type="number" id="duracao" placeholder="Ex: 120" class="input-field w-full p-4 rounded-xl">
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Limite de Usos (Vazio = Ilimitado)</label>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Limite de Usos</label>
                     <input type="number" id="limite" placeholder="Ex: 15" class="input-field w-full p-4 rounded-xl">
                 </div>
 
-                <button type="submit" class="md:col-span-2 py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.02] transition-all">
+                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.01] transition-all">
                     Criar Cupom Ativo
+                </button>
+                <button type="button" id="btn-cancelar" onclick="resetarFormulario()" class="hidden md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl">
+                    Cancelar Edição
                 </button>
             </form>
         </div>
 
-        <div id="lista-cupons" class="grid grid-cols-1 gap-4">
-            </div>
+        <div id="lista-cupons" class="grid grid-cols-1 gap-4 mb-20"></div>
     </div>
 
     <script>
+        // Configuração do Cliente Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
+        let cuponsLocais = []; // Cache para busca de dados na edição
+
+        /**
+         * Intercepta o envio do formulário para decidir entre INSERT ou UPDATE
+         */
         document.getElementById('form-cupom').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const id = document.getElementById('cupom-id').value;
             const codigo = document.getElementById('codigo').value.toUpperCase();
             const valor = parseFloat(document.getElementById('valor').value);
             const duracao = document.getElementById('duracao').value;
             const limite = document.getElementById('limite').value || 999;
 
             let expiraEm = null;
+            // Cálculo de data de expiração se a duração for informada
             if (duracao) {
                 const data = new Date();
                 data.setMinutes(data.getMinutes() + parseInt(duracao));
                 expiraEm = data.toISOString();
             }
 
-            const { error } = await supabaseClient.from('cupons').insert([{
-                codigo, valor, expira_em: expiraEm, limite_usos: parseInt(limite), ativo: true
-            }]);
+            const dadosCupom = {
+                codigo, 
+                valor, 
+                limite_usos: parseInt(limite), 
+                ativo: true
+            };
 
-            if (error) alert("Erro: " + error.message);
+            // Se for edição e não informou nova duração, não sobrescreve a data antiga
+            if (expiraEm) dadosCupom.expira_em = expiraEm;
+
+            let query;
+            if (id) {
+                // Modo Edição (UPDATE)
+                query = await supabaseClient.from('cupons').update(dadosCupom).eq('id', id);
+            } else {
+                // Modo Cadastro (INSERT)
+                dadosCupom.total_usado = 0; // Garante que novo cupom comece em zero
+                query = await supabaseClient.from('cupons').insert([dadosCupom]);
+            }
+
+            if (query.error) alert("Erro: " + query.error.message);
             else { 
-                document.getElementById('form-cupom').reset();
+                resetarFormulario();
                 carregarCupons(); 
             }
         });
 
+        /**
+         * Carrega os cupons do banco e renderiza os cards com lógica de status (Esgotado/Expirado)
+         */
         async function carregarCupons() {
             const { data, error } = await supabaseClient.from('cupons').select('*').order('id', { ascending: false });
             if (!error) {
+                cuponsLocais = data;
                 const container = document.getElementById('lista-cupons');
                 container.innerHTML = data.map(c => {
                     const agora = new Date();
@@ -93,34 +126,80 @@
                     const esgotado = c.total_usado >= c.limite_usos;
                     
                     return `
-                    <div class="bg-[#1a1d23] p-6 rounded-2xl border ${expirado || esgotado ? 'border-red-900 opacity-50' : 'border-gray-800'} flex justify-between items-center">
+                    <div class="bg-[#1a1d23] p-6 rounded-2xl border ${expirado || esgotado ? 'border-red-900 opacity-50' : 'border-gray-800'} flex justify-between items-center shadow-lg">
                         <div>
                             <div class="flex items-center gap-2">
                                 <span class="font-black text-lg text-white">${c.codigo}</span>
-                                <span class="bg-[#a3e635]/10 text-[#a3e635] text-[10px] px-2 py-0.5 rounded-full font-bold">R$ ${parseFloat(c.valor).toFixed(2)}</span>
+                                <span class="bg-[#a3e635]/10 text-[#a3e635] text-[10px] px-2 py-0.5 rounded-full font-bold">${c.valor}% OFF</span>
                             </div>
-                            <p class="text-[10px] text-gray-500 uppercase mt-1">
-                                ${expirado ? '🔴 EXPIRADO' : (c.expira_em ? `⏰ Até: ${new Date(c.expira_em).toLocaleString()}` : '♾️ Sem tempo')} | 
+                            <p class="text-[10px] text-gray-500 uppercase mt-1 font-bold">
+                                ${expirado ? '🔴 EXPIRADO' : (c.expira_em ? `⏰ Até: ${new Date(c.expira_em).toLocaleString()}` : '♾️ Sem limite de tempo')} | 
                                 ${esgotado ? '🚫 ESGOTADO' : `👥 Usos: ${c.total_usado}/${c.limite_usos}`}
                             </p>
                         </div>
-                        <button onclick="deletarCupom(${c.id})" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg">
-                            <i data-lucide="trash-2"></i>
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="prepararEdicao(${c.id})" class="text-blue-400 hover:bg-blue-500/10 p-2 rounded-lg transition-colors">
+                                <i data-lucide="pencil"></i>
+                            </button>
+                            <button onclick="deletarCupom(${c.id})" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
                     </div>
                 `}).join('');
-                lucide.createIcons();
+                lucide.createIcons(); // Renderiza os ícones Lucide injetados
             }
         }
 
+        /**
+         * Preenche o formulário com os dados do cupom para edição
+         */
+        function prepararEdicao(id) {
+            const cupom = cuponsLocais.find(c => c.id === id);
+            if (!cupom) return;
+
+            document.getElementById('cupom-id').value = cupom.id;
+            document.getElementById('codigo').value = cupom.codigo;
+            document.getElementById('valor').value = cupom.valor;
+            document.getElementById('limite').value = cupom.limite_usos;
+            document.getElementById('duracao').value = ""; // Limpa para evitar re-cálculo acidental
+
+            document.getElementById('titulo-form').innerText = "Editando Cupom: " + cupom.codigo;
+            document.getElementById('btn-submit').innerText = "Atualizar Cupom";
+            document.getElementById('btn-cancelar').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /**
+         * Volta o formulário para o estado inicial de cadastro
+         */
+        function resetarFormulario() {
+            document.getElementById('form-cupom').reset();
+            document.getElementById('cupom-id').value = "";
+            document.getElementById('titulo-form').innerText = "Gerar Novo Cupom";
+            document.getElementById('btn-submit').innerText = "Criar Cupom Ativo";
+            document.getElementById('btn-cancelar').classList.add('hidden');
+        }
+
+        /**
+         * Remove o cupom do banco de dados após confirmação
+         */
         async function deletarCupom(id) {
-            if(confirm("Remover cupom?")) {
+            if(confirm("Deseja realmente remover este cupom?")) {
                 await supabaseClient.from('cupons').delete().eq('id', id);
                 carregarCupons();
             }
         }
 
-        function logout() { localStorage.removeItem('is_admin'); window.location.href = "login.html"; }
+        /**
+         * Logout: Remove credenciais locais e redireciona
+         */
+        function logout() { 
+            localStorage.removeItem('is_admin'); 
+            window.location.href = "login.html"; 
+        }
+
+        // Inicialização
         carregarCupons();
     </script>
 </body>

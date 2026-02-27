@@ -5,16 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrazyDog - Gestão de Cardápio</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
     <style>
+        /* Variáveis de Cores da Identidade Visual CrazyDog */
         :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
         body { background-color: var(--bg-dark); color: white; }
+        
+        /* Estilos de Formulário */
         .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; }
-        .sortable-ghost { opacity: 0.4; background: #f48c2e !important; }
-        .drag-handle { cursor: grab; }
+        
+        /* Estilos para a biblioteca SortableJS */
+        .sortable-ghost { opacity: 0.4; background: #f48c2e !important; } /* Sombra do item sendo arrastado */
+        .drag-handle { cursor: grab; } /* Cursor de "mão" para indicar arraste */
         .drag-handle:active { cursor: grabbing; }
     </style>
 </head>
@@ -32,6 +39,7 @@
             <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6">Cadastrar Novo Item</h2>
             <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="hidden" id="edit-index" value="-1">
+                
                 <input type="text" id="nome" placeholder="Nome do Lanche" required class="input-field p-4 rounded-xl">
                 <input type="number" id="preco" placeholder="Preço (ex: 25.50)" step="0.01" required class="input-field p-4 rounded-xl">
                 
@@ -58,23 +66,26 @@
             </form>
         </div>
 
-        <div id="categorias-container" class="space-y-12 mb-20">
-            </div>
+        <div id="categorias-container" class="space-y-12 mb-20"></div>
     </div>
 
     <script>
+        // Configurações do Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         const form = document.getElementById('form-produto');
-        let lanches = [];
+        let lanches = []; // Cache local dos itens para manipulação rápida
 
+        /**
+         * Busca todos os itens do banco de dados ordenados pelo campo 'ordem'
+         */
         async function carregarLanchesDoBanco() {
             const { data, error } = await supabaseClient
                 .from('lanches')
                 .select('*')
-                .order('ordem', { ascending: true }); // Carrega pela ordem salva
+                .order('ordem', { ascending: true });
             
             if (!error) {
                 lanches = data;
@@ -82,6 +93,9 @@
             }
         }
 
+        /**
+         * Gera as listas de itens separadas por categoria e ativa o SortableJS para cada uma
+         */
         function renderCategoriasAdmin() {
             const container = document.getElementById('categorias-container');
             const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional'];
@@ -123,22 +137,24 @@
                 `;
                 container.appendChild(section);
 
-                // Ativar Ordenação para esta categoria
+                // Ativa a funcionalidade de arrastar e soltar (SortableJS)
                 new Sortable(document.getElementById(`lista-${cat}`), {
                     animation: 150,
                     handle: '.drag-handle',
                     ghostClass: 'sortable-ghost',
                     onEnd: async function() {
-                        await salvarNovaOrdem();
+                        await salvarNovaOrdem(); // Salva a nova sequência no banco após soltar
                     }
                 });
             });
             lucide.createIcons();
         }
 
+        /**
+         * Lê a ordem atual da interface e atualiza o campo 'ordem' no banco de dados
+         */
         async function salvarNovaOrdem() {
             const itensOrdenados = [];
-            // Percorre todas as listas para pegar a nova ordem
             ['Lanche', 'Doce', 'Bebida', 'Adicional'].forEach(cat => {
                 const lista = document.getElementById(`lista-${cat}`);
                 const rows = Array.from(lista.children);
@@ -147,15 +163,16 @@
                 });
             });
 
-            // Atualiza no banco (Bulk update simulado item por item para simplicidade)
+            // Loop para atualizar cada item no Supabase
             for (const item of itensOrdenados) {
                 await supabaseClient.from('lanches').update({ ordem: item.ordem }).eq('id', item.id);
             }
             console.log("Ordem salva!");
         }
 
-        // --- LÓGICA DE FORMULÁRIO (Igual à sua anterior com ajustes de ID) ---
-        
+        /**
+         * Gerencia o envio do formulário (Cadastro ou Atualização)
+         */
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const index = document.getElementById('edit-index').value;
@@ -163,6 +180,7 @@
 
             if (index == "-1" && !file) { alert("Selecione uma imagem!"); return; }
 
+            // Se houver novo arquivo, converte para Base64; se não, mantém a imagem anterior
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => salvarLanche(event.target.result, index);
@@ -173,6 +191,9 @@
             }
         });
 
+        /**
+         * Envia os dados para o Supabase (Insert ou Update)
+         */
         async function salvarLanche(imageData, editId) {
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
@@ -188,9 +209,11 @@
 
             let error;
             if (editId == "-1") {
+                // Inserção de novo registro
                 const { error: insError } = await supabaseClient.from('lanches').insert([lancheData]);
                 error = insError;
             } else {
+                // Atualização de registro existente
                 const { error: updError } = await supabaseClient.from('lanches').update(lancheData).eq('id', editId);
                 error = updError;
             }
@@ -201,6 +224,9 @@
             }
         }
 
+        /**
+         * Preenche o formulário com os dados do item selecionado para edição
+         */
         function prepararEdicaoPeloId(id) {
             const item = lanches.find(l => l.id == id);
             document.getElementById('edit-index').value = id;
@@ -212,9 +238,12 @@
             document.getElementById('titulo-form').innerText = "Editando: " + item.nome;
             document.getElementById('btn-submit').innerText = "Atualizar";
             document.getElementById('btn-cancelar').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Sobe a página para o formulário
         }
 
+        /**
+         * Reseta o formulário e volta para o modo "Cadastro"
+         */
         function cancelarEdicao() {
             form.reset();
             document.getElementById('edit-index').value = "-1";
@@ -224,6 +253,9 @@
             document.getElementById('btn-cancelar').classList.add('hidden');
         }
 
+        /**
+         * Remove o item do banco de dados
+         */
         async function removerLanchePeloId(id) {
             if(confirm("Deseja remover este item?")) {
                 await supabaseClient.from('lanches').delete().eq('id', id);
@@ -231,12 +263,16 @@
             }
         }
 
+        // --- Verificação de Segurança (Middleware Simulado) ---
         if (localStorage.getItem('is_admin') !== 'true') {
             window.location.href = "login.html";
         } else {
             carregarLanchesDoBanco();
         }
 
+        /**
+         * Finaliza a sessão do administrador
+         */
         function logout() {
             localStorage.removeItem('is_admin');
             window.location.href = "login.html";

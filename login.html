@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* Paleta de Cores e Estilos Globais */
         :root {
             --bg-dark: #23272f;
             --card-dark: #2d3139;
@@ -16,8 +17,19 @@
             --primary-green: #a3e635;
         }
         body { background-color: var(--bg-dark); color: white; }
-        .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; transition: border 0.3s; }
-        .input-field:focus { border-color: var(--primary-orange); outline: none; }
+        
+        /* Estilização customizada dos campos de input */
+        .input-field { 
+            background: #1a1d23; 
+            border: 1px solid #3a3f4b; 
+            color: white; 
+            transition: border 0.3s; 
+        }
+        /* Efeito de foco no input para feedback visual */
+        .input-field:focus { 
+            border-color: var(--primary-orange); 
+            outline: none; 
+        }
     </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col">
@@ -58,63 +70,61 @@
     </main>
 
     <script>
-        // 1. Configuração do Supabase
+        // 1. Instanciação do Cliente Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // 2. Lógica de Login simplificada
+        // 2. Interceptação do Formulário de Login
         document.getElementById('form-login').addEventListener('submit', async function(e) {
-            e.preventDefault();
+            e.preventDefault(); // Impede o recarregamento da página
             
             const email = document.getElementById('email').value;
             const senha = document.getElementById('senha').value;
 
+            // Chamada ao serviço de Autenticação do Supabase
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: senha,
             });
 
             if (error) {
+                // Feedback em caso de credenciais inválidas ou erro de rede
                 alert("Acesso Negado: " + error.message);
             } else {
-                // Verificação de Admin
+                // 3. Verificação de Perfil Administrativo
+                // Definimos um e-mail mestre para controle de acesso ao Dashboard
                 if (data.user.email === "admin@crazydog.com") {
+                    // Armazena flag no navegador para proteger as rotas internas via JS
                     localStorage.setItem('is_admin', 'true');
+                    // Redirecionamento para a Dashboard
                     window.location.href = "admin.html";
                 } else {
-                    // Caso um usuário não admin tente logar, desconectamos ele
+                    // Proteção: Caso um usuário comum tente acessar, forçamos o log-out
                     await supabaseClient.auth.signOut();
                     alert("Este acesso não possui permissões administrativas.");
                 }
             }
         });
 
+        // Inicializa os ícones do Lucide após o carregamento do DOM
         lucide.createIcons();
     </script>
+
+    <footer class="mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
+        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex flex-col items-center md:items-start">
+                </div>
+
+            <div class="text-center">
+                <p class="text-gray-400 text-xs font-medium">
+                    &copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.
+                </p>
+            </div>
+
+            <div class="flex gap-4">
+                </div>
+        </div>
+    </footer>
 </body>
-<footer class="mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
-    <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-        
-        <div class="flex flex-col items-center md:items-start">
-            <!--
-            <h4 class="text-[#f48c2e] font-black uppercase italic tracking-tighter text-lg">CrazyDog</h4>
-            <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-1">O melhor dog de Itapetininga</p>
-            -->
-        </div>
-
-        <div class="text-center">
-            <p class="text-gray-400 text-xs font-medium">
-                &copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.
-            </p>
-        </div>
-
-        <div class="flex gap-4">
-            <!--
-            <a href="#" class="text-gray-500 hover:text-[#a3e635] transition-colors"><i data-lucide="instagram" size="18"></i></a>
-            <a href="#" class="text-gray-500 hover:text-[#a3e635] transition-colors"><i data-lucide="facebook" size="18"></i></a>
-            -->
-        </div>
-    </div>
-</footer>
 </html>
