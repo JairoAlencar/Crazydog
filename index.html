@@ -245,15 +245,40 @@
                 if (itens.length > 0) {
                     container.innerHTML += `<div class="col-span-full mt-10 mb-4 border-l-4 border-[#f48c2e] pl-4"><h3 class="text-2xl font-black italic text-[#a3e635]">${nomesExibicao[cat]}</h3></div>`;
                     itens.forEach(item => {
+                        // 1. Criamos a constante que define se o item pode ser vendido
+                        // Lanches sempre terão estoque (9999), Bebidas/Doces dependem do seu input no Admin
+                        const temEstoque = item.estoque > 0;
+
                         container.innerHTML += `
-                        <div class="orange-border-card bg-[#2d3139] overflow-hidden flex flex-col shadow-lg">
-                            <div class="h-48 overflow-hidden"><img src="${item.imagem}" class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500"></div>
+                        <div class="orange-border-card bg-[#2d3139] overflow-hidden flex flex-col shadow-lg relative ${!temEstoque ? 'opacity-50 grayscale' : ''}">
+                            
+                            ${!temEstoque ? `
+                            <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/20">
+                                <span class="bg-red-600 text-white text-[10px] font-black uppercase px-4 py-1 rounded-full italic shadow-xl">Esgotado</span>
+                            </div>` : ''}
+
+                            <div class="h-48 overflow-hidden relative">
+                                <img src="${item.imagem}" class="w-full h-full object-cover">
+                            </div>
+
                             <div class="p-6 flex-1 flex flex-col">
-                                <h4 class="font-black uppercase italic">${item.nome}</h4>
-                                <p class="text-gray-400 text-xs mt-2 flex-1">${item.descricao || ''}</p>
+                                <h4 class="font-black uppercase italic text-white">${item.nome}</h4>
+                                <p class="text-gray-400 text-xs mt-2 flex-1 leading-tight">${item.descricao || ''}</p>
+                                
                                 <div class="flex justify-between items-center mt-4">
-                                    <span class="text-[#a3e635] font-black text-xl">R$ ${parseFloat(item.preco).toFixed(2)}</span>
-                                    <button onclick="adicionarNoCarrinho(${item.id})" class="bg-[#f48c2e] text-white p-3 rounded-xl hover:scale-110 transition-all"><i data-lucide="plus" size="20"></i></button>
+                                    <div class="flex flex-col">
+                                        <span class="text-[#a3e635] font-black text-xl">R$ ${parseFloat(item.preco).toFixed(2)}</span>
+                                        
+                                        ${item.categoria !== 'Lanche' && temEstoque ? `<span class="text-[8px] text-gray-500 font-bold uppercase">Restam ${item.estoque} un.</span>` : ''}
+                                    </div>
+                                    
+                                    <button 
+                                        onclick="${temEstoque ? `adicionarNoCarrinho(${item.id})` : ''}" 
+                                        ${!temEstoque ? 'disabled' : ''}
+                                        class="p-3 rounded-xl transition-all shadow-lg 
+                                        ${temEstoque ? 'bg-[#f48c2e] hover:scale-110 active:scale-95' : 'bg-gray-700 cursor-not-allowed'}">
+                                        <i data-lucide="${temEstoque ? 'plus' : 'slash'}" size="20" class="text-white"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>`;
@@ -411,6 +436,31 @@
                     });
                 }
             });
+
+            // Dentro da função finalizarPedido, antes de abrir o WhatsApp:
+            for (const item of carrinho) {
+                if (item.categoria !== 'Lanche') {
+                    // Buscamos o estoque atualizado do banco para evitar erro de concorrência
+                    const { data: lancheAtual } = await supabaseClient
+                        .from('lanches')
+                        .select('estoque')
+                        .eq('id', item.id)
+                        .single();
+
+                    if (lancheAtual) {
+                        const novoEstoque = Math.max(0, lancheAtual.estoque - 1);
+                        
+                        const { error } = await supabaseClient
+                            .from('lanches')
+                            .update({ estoque: novoEstoque })
+                            .eq('id', item.id);
+
+                        if (error) {
+                            console.error(`Erro ao atualizar estoque de ${item.nome}:`, error.message);
+                        }
+                    }
+                }
+            }
 
             // Montagem da mensagem estruturada para o WhatsApp
             let msg = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;

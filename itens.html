@@ -12,16 +12,11 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <style>
-        /* Variáveis de Cores da Identidade Visual CrazyDog */
         :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
         body { background-color: var(--bg-dark); color: white; }
-        
-        /* Estilos de Formulário */
         .input-field { background: #1a1d23; border: 1px solid #3a3f4b; color: white; }
-        
-        /* Estilos para a biblioteca SortableJS */
-        .sortable-ghost { opacity: 0.4; background: #f48c2e !important; } /* Sombra do item sendo arrastado */
-        .drag-handle { cursor: grab; } /* Cursor de "mão" para indicar arraste */
+        .sortable-ghost { opacity: 0.4; background: #f48c2e !important; }
+        .drag-handle { cursor: grab; }
         .drag-handle:active { cursor: grabbing; }
     </style>
 </head>
@@ -40,9 +35,14 @@
             <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="hidden" id="edit-index" value="-1">
                 
-                <input type="text" id="nome" placeholder="Nome do Lanche" required class="input-field p-4 rounded-xl">
+                <input type="text" id="nome" placeholder="Nome do Item" required class="input-field p-4 rounded-xl">
                 <input type="number" id="preco" placeholder="Preço (ex: 25.50)" step="0.01" required class="input-field p-4 rounded-xl">
                 
+                <div class="md:col-span-2">
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-2">Quantidade disponível (Estoque)</label>
+                    <input type="number" id="estoque" placeholder="Ex: 50" required class="input-field w-full p-4 rounded-xl font-bold">
+                </div>
+
                 <div class="md:col-span-2">
                     <label id="label-imagem" class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Foto (Arraste ou Clique)</label>
                     <input type="file" id="imagem_file" accept="image/*" class="input-field w-full p-4 rounded-xl border-dashed border-2 border-gray-600">
@@ -70,17 +70,13 @@
     </div>
 
     <script>
-        // Configurações do Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         const form = document.getElementById('form-produto');
-        let lanches = []; // Cache local dos itens para manipulação rápida
+        let lanches = [];
 
-        /**
-         * Busca todos os itens do banco de dados ordenados pelo campo 'ordem'
-         */
         async function carregarLanchesDoBanco() {
             const { data, error } = await supabaseClient
                 .from('lanches')
@@ -93,9 +89,6 @@
             }
         }
 
-        /**
-         * Gera as listas de itens separadas por categoria e ativa o SortableJS para cada uma
-         */
         function renderCategoriasAdmin() {
             const container = document.getElementById('categorias-container');
             const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional'];
@@ -120,7 +113,7 @@
                                     <img src="${item.imagem}" class="w-10 h-10 rounded-lg object-cover">
                                     <div>
                                         <p class="font-bold uppercase italic text-xs text-white">${item.nome}</p>
-                                        <p class="text-[#a3e635] text-[10px] font-bold">R$ ${parseFloat(item.preco).toFixed(2)}</p>
+                                        <p class="text-[#a3e635] text-[10px] font-bold">R$ ${parseFloat(item.preco).toFixed(2)} | Estoque: ${item.estoque || 0}</p>
                                     </div>
                                 </div>
                                 <div class="flex gap-1">
@@ -137,42 +130,35 @@
                 `;
                 container.appendChild(section);
 
-                // Ativa a funcionalidade de arrastar e soltar (SortableJS)
                 new Sortable(document.getElementById(`lista-${cat}`), {
                     animation: 150,
                     handle: '.drag-handle',
                     ghostClass: 'sortable-ghost',
                     onEnd: async function() {
-                        await salvarNovaOrdem(); // Salva a nova sequência no banco após soltar
+                        await salvarNovaOrdem();
                     }
                 });
             });
             lucide.createIcons();
         }
 
-        /**
-         * Lê a ordem atual da interface e atualiza o campo 'ordem' no banco de dados
-         */
         async function salvarNovaOrdem() {
             const itensOrdenados = [];
             ['Lanche', 'Doce', 'Bebida', 'Adicional'].forEach(cat => {
                 const lista = document.getElementById(`lista-${cat}`);
-                const rows = Array.from(lista.children);
-                rows.forEach((row, index) => {
-                    itensOrdenados.push({ id: row.dataset.id, ordem: index });
-                });
+                if(lista) {
+                    const rows = Array.from(lista.children);
+                    rows.forEach((row, index) => {
+                        itensOrdenados.push({ id: row.dataset.id, ordem: index });
+                    });
+                }
             });
 
-            // Loop para atualizar cada item no Supabase
             for (const item of itensOrdenados) {
                 await supabaseClient.from('lanches').update({ ordem: item.ordem }).eq('id', item.id);
             }
-            console.log("Ordem salva!");
         }
 
-        /**
-         * Gerencia o envio do formulário (Cadastro ou Atualização)
-         */
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const index = document.getElementById('edit-index').value;
@@ -180,7 +166,6 @@
 
             if (index == "-1" && !file) { alert("Selecione uma imagem!"); return; }
 
-            // Se houver novo arquivo, converte para Base64; se não, mantém a imagem anterior
             if (file) {
                 const reader = new FileReader();
                 reader.onload = (event) => salvarLanche(event.target.result, index);
@@ -191,9 +176,6 @@
             }
         });
 
-        /**
-         * Envia os dados para o Supabase (Insert ou Update)
-         */
         async function salvarLanche(imageData, editId) {
             const btn = document.getElementById('btn-submit');
             btn.disabled = true;
@@ -204,16 +186,15 @@
                 preco: parseFloat(document.getElementById('preco').value),
                 descricao: document.getElementById('desc').value,
                 categoria: document.getElementById('categoria').value,
-                imagem: imageData
+                imagem: imageData,
+                estoque: parseInt(document.getElementById('estoque').value) // CAPTURA O ESTOQUE
             };
 
             let error;
             if (editId == "-1") {
-                // Inserção de novo registro
                 const { error: insError } = await supabaseClient.from('lanches').insert([lancheData]);
                 error = insError;
             } else {
-                // Atualização de registro existente
                 const { error: updError } = await supabaseClient.from('lanches').update(lancheData).eq('id', editId);
                 error = updError;
             }
@@ -221,12 +202,13 @@
             if (!error) {
                 cancelarEdicao();
                 await carregarLanchesDoBanco();
+            } else {
+                alert("Erro ao salvar: " + error.message);
+                btn.disabled = false;
+                btn.innerText = "Salvar no Cardápio";
             }
         }
 
-        /**
-         * Preenche o formulário com os dados do item selecionado para edição
-         */
         function prepararEdicaoPeloId(id) {
             const item = lanches.find(l => l.id == id);
             document.getElementById('edit-index').value = id;
@@ -234,16 +216,15 @@
             document.getElementById('preco').value = item.preco;
             document.getElementById('desc').value = item.descricao;
             document.getElementById('categoria').value = item.categoria;
+            document.getElementById('estoque').value = item.estoque || 0; // PREENCHE O ESTOQUE
             
             document.getElementById('titulo-form').innerText = "Editando: " + item.nome;
             document.getElementById('btn-submit').innerText = "Atualizar";
             document.getElementById('btn-cancelar').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' }); // Sobe a página para o formulário
+            document.getElementById('msg-imagem-edit').classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        /**
-         * Reseta o formulário e volta para o modo "Cadastro"
-         */
         function cancelarEdicao() {
             form.reset();
             document.getElementById('edit-index').value = "-1";
@@ -251,11 +232,9 @@
             document.getElementById('btn-submit').innerText = "Salvar no Cardápio";
             document.getElementById('btn-submit').disabled = false;
             document.getElementById('btn-cancelar').classList.add('hidden');
+            document.getElementById('msg-imagem-edit').classList.add('hidden');
         }
 
-        /**
-         * Remove o item do banco de dados
-         */
         async function removerLanchePeloId(id) {
             if(confirm("Deseja remover este item?")) {
                 await supabaseClient.from('lanches').delete().eq('id', id);
@@ -263,16 +242,12 @@
             }
         }
 
-        // --- Verificação de Segurança (Middleware Simulado) ---
         if (localStorage.getItem('is_admin') !== 'true') {
             window.location.href = "login.html";
         } else {
             carregarLanchesDoBanco();
         }
 
-        /**
-         * Finaliza a sessão do administrador
-         */
         function logout() {
             localStorage.removeItem('is_admin');
             window.location.href = "login.html";

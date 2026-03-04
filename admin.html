@@ -9,11 +9,9 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Variáveis de tema para manter consistência visual com o cardápio */
         :root { --bg-dark: #1a1d23; --card-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
         body { background-color: var(--bg-dark); color: white; }
         
-        /* Estilização dos Cards de Navegação com efeitos de hover e sombra */
         .orange-border-card { border: 2px solid #374151; transition: all 0.3s ease; }
         .orange-border-card:hover { 
             border-color: var(--primary-orange); 
@@ -21,8 +19,15 @@
             box-shadow: 0 10px 30px -10px rgba(244, 140, 46, 0.3); 
         }
         
-        /* Estilização dos Cards de Estatísticas (Stats) */
         .stat-card { background: rgba(35, 39, 47, 0.5); border: 1px solid #374151; padding: 1.2rem; border-radius: 1.5rem; text-align: center; }
+        
+        /* Animação de pulso para alertas críticos */
+        .alert-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
     </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col">
@@ -47,8 +52,8 @@
                 <div class="w-16 h-16 bg-[#f48c2e]/10 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-[#f48c2e] transition-all">
                     <i data-lucide="plus-circle" class="text-[#f48c2e] group-hover:text-white"></i>
                 </div>
-                <h3 class="text-lg font-black uppercase italic">Novos Itens</h3>
-                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-2">Cardápio & Adicionais</p>
+                <h3 class="text-lg font-black uppercase italic">Gerenciar Itens</h3>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-2">Cardápio & Estoque</p>
             </a>
 
             <a href="cupons.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
@@ -56,7 +61,7 @@
                     <i data-lucide="ticket" class="text-[#a3e635] group-hover:text-[#1a1d23]"></i>
                 </div>
                 <h3 class="text-lg font-black uppercase italic">Cupons</h3>
-                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-2">Descontos Ativos</p>
+                <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mt-2">Promoções Ativas</p>
             </a>
 
             <a href="entregas.html" class="orange-border-card bg-[#23272f] p-10 rounded-[2.5rem] flex flex-col items-center text-center group">
@@ -72,7 +77,7 @@
             <i data-lucide="bar-chart-3" size="20"></i> Resumo do Inventário
         </h2>
         
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
             <div class="stat-card">
                 <span id="count-lanches" class="block text-2xl font-black text-white">--</span>
                 <span class="text-[9px] uppercase font-bold text-gray-500 tracking-tighter">Lanches</span>
@@ -95,6 +100,14 @@
             </div>
         </div>
 
+        <div id="estoque-alerta-container" class="hidden">
+            <h2 class="text-xl font-black uppercase italic text-red-500 mb-6 flex items-center gap-2">
+                <i data-lucide="alert-triangle" size="20"></i> Atenção: Reposição Necessária
+            </h2>
+            <div id="lista-alertas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+        </div>
+
     </main>
 
     <footer class="relative z-20 mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
@@ -106,20 +119,14 @@
     </footer>
 
     <script>
-        // Inicializa os ícones do Lucide no carregamento
-        lucide.createIcons();
-
-        // Configuração de acesso ao Banco de Dados Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         /**
-         * Realiza a contagem de itens em diversas tabelas e categorias
-         * Utiliza Promise.all para disparar todas as requisições simultaneamente (otimização de tempo)
+         * Carrega as contagens totais para os cards superiores
          */
         async function carregarStats() {
-            // Função utilitária interna para facilitar o SELECT COUNT
             const getCount = async (table, filterCol = null, filterVal = null) => {
                 let query = supabaseClient.from(table).select('*', { count: 'exact', head: true });
                 if (filterCol) query = query.eq(filterCol, filterVal);
@@ -127,7 +134,6 @@
                 return count || 0;
             };
 
-            // Disparo paralelo das consultas
             const [lanches, doces, bebidas, adicionais, cupons] = await Promise.all([
                 getCount('lanches', 'categoria', 'Lanche'),
                 getCount('lanches', 'categoria', 'Doce'),
@@ -136,23 +142,61 @@
                 getCount('cupons', 'ativo', true)
             ]);
 
-            // Atualização do DOM com os valores reais
             document.getElementById('count-lanches').innerText = lanches;
             document.getElementById('count-doces').innerText = doces;
             document.getElementById('count-bebidas').innerText = bebidas;
             document.getElementById('count-adicionais').innerText = adicionais;
             document.getElementById('count-cupons').innerText = cupons;
+
+            verificarEstoqueCritico();
         }
 
         /**
-         * Limpa o token de administrador do navegador e redireciona para a tela de login
+         * Monitora itens com estoque baixo (menos de 6 unidades)
+         * Filtra para ignorar a categoria 'Lanche' (que está com 9999)
          */
+        async function verificarEstoqueCritico() {
+            const { data: itensCriticos } = await supabaseClient
+                .from('lanches')
+                .select('nome, estoque, categoria')
+                .neq('categoria', 'Lanche') // Ignora lanches na lista de alertas
+                .lt('estoque', 6)
+                .order('estoque', { ascending: true });
+
+            const containerAlerta = document.getElementById('estoque-alerta-container');
+            const listaAlerta = document.getElementById('lista-alertas');
+
+            if (itensCriticos && itensCriticos.length > 0) {
+                containerAlerta.classList.remove('hidden');
+                listaAlerta.innerHTML = itensCriticos.map(item => `
+                    <div class="bg-red-500/10 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center alert-pulse">
+                        <div>
+                            <p class="text-xs font-black uppercase text-white">${item.nome}</p>
+                            <p class="text-[10px] text-red-400 font-bold uppercase">${item.categoria}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xl font-black text-red-500">${item.estoque <= 0 ? 'FALTA' : item.estoque}</span>
+                            <p class="text-[8px] text-gray-500 uppercase font-bold">no estoque</p>
+                        </div>
+                    </div>
+                `).join('');
+                lucide.createIcons();
+            } else {
+                containerAlerta.classList.add('hidden');
+            }
+        }
+
         function logout() {
             localStorage.removeItem('is_admin');
             window.location.href = "login.html";
         }
 
-        // Execução automática ao carregar a página
+        // Middleware de segurança simples
+        if (localStorage.getItem('is_admin') !== 'true') {
+            window.location.href = "login.html";
+        }
+
+        lucide.createIcons();
         carregarStats();
     </script>
 </body>
