@@ -33,7 +33,7 @@
             <form id="form-cupom" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="hidden" id="cupom-id" value="">
                 
-                <input type="text" id="codigo" placeholder="EX: JAIRO10" required class="input-field p-4 rounded-xl font-black uppercase">
+                <input type="text" id="codigo" placeholder="Ex: Crazy10" required class="input-field p-4 rounded-xl font-bold">
                 <input type="number" id="valor" placeholder="Desconto em % (Ex: 10)" step="1" min="1" max="100" required class="input-field p-4 rounded-xl font-bold">
                 
                 <div>
@@ -47,7 +47,7 @@
                 </div>
 
                 <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.01] transition-all">
-                    Criar Cupom Ativo
+                    Criar Novo Cupom
                 </button>
                 <button type="button" id="btn-cancelar" onclick="resetarFormulario()" class="hidden md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl">
                     Cancelar Edição

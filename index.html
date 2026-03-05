@@ -171,11 +171,24 @@
         let bairroNome = "";        // Nome do bairro selecionado
         let tipoEntrega = 'delivery'; // 'delivery' ou 'retirada'
 
-        // Ciclo de Vida: Carregamento Inicial
-        document.addEventListener('DOMContentLoaded', () => {
-            buscarLanchesDoBanco();
-            carregarBairros();
-            lucide.createIcons();
+       // Ciclo de Vida: Carregamento Inicial Otimizado
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.time('CargaInicial'); // Monitor de performance para você ver no F12
+            
+            try {
+                // Dispara as duas buscas ao mesmo tempo no banco (Ganho de performance real)
+                await Promise.all([
+                    buscarLanchesDoBanco(),
+                    carregarBairros()
+                ]);
+
+                // Só renderiza os ícones DEPOIS que o HTML dos lanches e bairros estiver pronto
+                lucide.createIcons();
+                
+                console.timeEnd('CargaInicial');
+            } catch (error) {
+                console.error("Erro no carregamento crítico:", error);
+            }
         });
 
         // Recupera produtos do Supabase
@@ -417,10 +430,7 @@
 
             // Incrementa contador de uso do cupom no banco antes de abrir o link
             if (nomeCupomAtivo) {
-                const { data: cupom } = await supabaseClient.from('cupons').select('id, total_usado').eq('codigo', nomeCupomAtivo).single();
-                if (cupom) {
-                    await supabaseClient.from('cupons').update({ total_usado: (cupom.total_usado || 0) + 1 }).eq('id', cupom.id);
-                }
+                await supabaseClient.rpc('incrementar_uso_cupom', { codigo_cupom: nomeCupomAtivo });
             }
 
             let itensTexto = "";

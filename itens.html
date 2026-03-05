@@ -61,8 +61,12 @@
                     </select>
                 </div>
 
-                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#f48c2e] text-white font-black uppercase rounded-2xl">Salvar no Cardápio</button>
-                <button type="button" id="btn-cancelar" onclick="cancelarEdicao()" class="md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl hidden">Cancelar Edição</button>
+                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.01] transition-all">
+                    Salvar no Cardápio
+                </button>
+                <button type="button" id="btn-cancelar" onclick="cancelarEdicao()" class="hidden md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl">
+                    Cancelar Edição
+                </button>
             </form>
         </div>
 
@@ -101,7 +105,7 @@
                 section.innerHTML = `
                     <div class="flex items-center gap-2 mb-4 border-b border-gray-700 pb-2">
                         <i data-lucide="layers" class="text-[#a3e635] w-4 h-4"></i>
-                        <h3 class="text-sm font-black uppercase tracking-widest text-gray-400">${cat}s</h3>
+                        <h3 class="text-sm font-black uppercase tracking-widest text-gray-400">${cat}</h3>
                     </div>
                     <div id="lista-${cat}" class="space-y-2">
                         ${itens.map(item => `
