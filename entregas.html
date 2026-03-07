@@ -15,133 +15,161 @@
         .input-field:focus { border-color: var(--primary-orange); box-shadow: 0 0 0 2px rgba(244, 140, 46, 0.1); }
     </style>
 </head>
-<body class="p-6">
+<body class="p-6 bg-[#23272f] text-white font-sans">
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-10">
             <h1 class="text-2xl font-black uppercase italic text-[#f48c2e] flex items-center gap-3">
-                <i data-lucide="truck"></i> Taxas de Entrega
+                <i data-lucide="truck"></i> Simulador de Frete
             </h1>
             <div class="flex gap-4">
-                <a href="admin.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all uppercase font-bold">Voltar</a>
+                <a href="admin.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all uppercase font-bold flex items-center">Voltar</a>
                 <button onclick="logout()" class="text-xs bg-red-600 px-4 py-2 rounded-lg font-bold uppercase">Sair</button>
             </div>
         </header>
 
         <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
-            <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Cadastrar Bairro</h2>
-            <form id="form-taxa" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input type="hidden" id="taxa-id" value="">
-                
-                <input type="text" id="bairro" placeholder="Nome do Bairro" required class="input-field p-4 rounded-xl font-bold uppercase">
-                <input type="number" id="valor" placeholder="Taxa (R$)" step="0.01" required class="input-field p-4 rounded-xl font-bold">
-                
-                <button type="submit" id="btn-submit" class="md:col-span-2 py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.01] transition-all">
-                    Salvar Bairro
-                </button>
-                <button type="button" id="btn-cancelar" onclick="resetarFormulario()" class="hidden md:col-span-2 py-2 bg-gray-600 text-white font-bold uppercase rounded-xl">
-                    Cancelar Edição
+            <h2 id="titulo-form" class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Calcular Nova Rota</h2>
+            
+            <form id="form-simulacao" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="flex gap-2 md:col-span-2">
+                    <input type="text" id="cep" placeholder="CEP" class="w-1/3 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#a3e635]" onblur="buscarEnderecoViaCEP()">
+                    <input type="text" id="rua" placeholder="Rua (Preenchida pelo CEP)" readonly class="flex-1 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold text-gray-500 outline-none">
+                </div>
+
+                <input type="text" id="numero" placeholder="Número" class="bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#f48c2e]">
+                <input type="text" id="bairro_display" placeholder="Bairro" readonly class="bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold text-gray-500 outline-none">
+
+                <button type="button" id="btn-calc-frete" onclick="atualizarFreteGoogle()" class="md:col-span-2 py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.01] transition-all shadow-lg">
+                    Calcular Valor da Entrega
                 </button>
             </form>
         </div>
 
-        <div id="lista-taxas" class="grid grid-cols-1 gap-4 mb-20">
+        <div id="resultado-container" class="hidden grid grid-cols-1 gap-4 mb-20">
+            <div class="bg-[#1a1d23] p-8 rounded-3xl border border-[#a3e635] flex justify-between items-center shadow-lg animate-in fade-in zoom-in duration-300">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="res-bairro" class="font-black text-xl text-white uppercase italic">BAIRRO</span>
+                        <span id="res-km" class="bg-[#f48c2e]/10 text-[#f48c2e] text-xs px-3 py-1 rounded-full font-black">0.0 KM</span>
+                    </div>
+                    <p id="res-endereco-completo" class="text-[10px] text-gray-500 uppercase mt-2 font-bold tracking-widest">Endereço Completo Aqui</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Custo Estimado</p>
+                    <span id="res-valor" class="text-4xl font-black text-[#a3e635]">R$ 0,00</span>
+                </div>
             </div>
+        </div>
     </div>
 
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC2N-XgovNRshXkA9XKgk-O0jwevjYhq5w&libraries=places"></script>
     <script>
-        const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        const ENDERECO_ORIGEM = "Rua Adão Mariano Gomes, 370 - Jardim Brasil, Itapetininga - SP";
+        const VALOR_POR_KM = 4.00; 
+        const MINIMO_FRETE = 5.00;
 
-        let taxasLocais = [];
+        async function buscarEnderecoViaCEP() {
+            const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            if (cep.length !== 8) return;
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const data = await response.json();
+            if (!data.erro) {
+                document.getElementById('rua').value = data.logradouro;
+                document.getElementById('bairro_display').value = data.bairro;
+                document.getElementById('numero').focus();
+            }
+        }
 
-        /**
-         * Envio do formulário com tratamento de erro de duplicidade
-         */
-        document.getElementById('form-taxa').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('taxa-id').value;
-            const bairro = document.getElementById('bairro').value.trim();
-            const valor = parseFloat(document.getElementById('valor').value);
+        async function calcularDistanciaFrete(enderecoDestino) {
+            return new Promise((resolve) => {
+                const service = new google.maps.DistanceMatrixService();
+                service.getDistanceMatrix({
+                    origins: ["Rua Adão Mariano Gomes, 370 - Jardim Brasil, Itapetininga - SP"],
+                    destinations: [enderecoDestino],
+                    travelMode: google.maps.TravelMode.DRIVING,
+                }, (response, status) => {
+                    if (status === "OK") {
+                        const element = response.rows[0].elements[0];
+                        if (element.status === "OK") {
+                            const distanciaKm = element.distance.value / 1000;
+                            let valorFinal = 0;
 
-            const dadosBairro = { bairro, valor };
+                            if (distanciaKm <= 1) {
+                                valorFinal 
+                                = Math.max(distanciaKm * 3.65, 5);
+                            } 
+                            else if (distanciaKm <= 2) {
+                                valorFinal 
+                                = Math.max(distanciaKm * 4.20, 5);
+                            }
+                            else if (distanciaKm <= 3) {
+                                valorFinal 
+                                = Math.max(distanciaKm * 3, 5);
+                            }
+                            else if (distanciaKm <= 4) {
+                                valorFinal = 4 + (distanciaKm * 0.30);
+                            }
+                            else if (distanciaKm <= 5) {
+                                valorFinal = 5 + (distanciaKm * 0.30);
+                            }
+                            else if (distanciaKm <= 6) {
+                                valorFinal = 6 + (distanciaKm * 0.35);
+                            }
+                            else if (distanciaKm <= 7) {
+                                valorFinal = 7 + (distanciaKm * 0.35);
+                            }
+                            else if (distanciaKm <= 8) {
+                                valorFinal = 9 + (distanciaKm * 0.45); 
+                            } 
+                            else {
+                                valorFinal = 10 + (distanciaKm * 0.40);
+                            }
 
-            let query;
-            if (id) {
-                query = await supabaseClient.from('taxas_entrega').update(dadosBairro).eq('id', id);
+                            // Arredondamento para o teto (inteiro)
+                            const valorArredondado = Math.ceil(valorFinal);
+
+                            resolve({ 
+                                sucesso: true, 
+                                valor: valorArredondado, 
+                                km: distanciaKm.toFixed(1) 
+                            });
+                        } else {
+                            resolve({ sucesso: false, erro: "Endereço não localizado." });
+                        }
+                    } else {
+                        resolve({ sucesso: false, erro: "Erro no Google: " + status });
+                    }
+                });
+            });
+        }
+
+        async function atualizarFreteGoogle() {
+            const rua = document.getElementById('rua').value;
+            const num = document.getElementById('numero').value;
+            const bairro = document.getElementById('bairro_display').value;
+            
+            if (!rua || !num) { alert("Preencha o CEP e o número!"); return; }
+
+            const btn = document.getElementById('btn-calc-frete');
+            btn.innerText = "CALCULANDO ROTA...";
+            btn.disabled = true;
+
+            const endereco = `${rua}, ${num} - ${bairro}, Itapetininga, SP`;
+            const res = await calcularDistanciaFrete(endereco);
+
+            if (res.sucesso) {
+                document.getElementById('resultado-container').classList.remove('hidden');
+                document.getElementById('res-bairro').innerText = bairro;
+                document.getElementById('res-km').innerText = `${res.km} KM`;
+                document.getElementById('res-valor').innerText = `R$ ${res.valor.toFixed(2)}`;
+                document.getElementById('res-endereco-completo').innerText = endereco;
+                
+                btn.innerText = "CALCULAR NOVO FRETE";
             } else {
-                query = await supabaseClient.from('taxas_entrega').insert([dadosBairro]);
+                alert(res.erro);
+                btn.innerText = "TENTAR NOVAMENTE";
             }
-
-            if (query.error) {
-                if(query.error.code === '23505') {
-                    alert("Ops! Esse bairro já está na lista.");
-                } else {
-                    alert("Erro ao salvar: " + query.error.message);
-                }
-            } else { 
-                resetarFormulario(); 
-                carregarTaxas(); 
-            }
-        });
-
-        /**
-         * Carrega e renderiza os bairros
-         */
-        async function carregarTaxas() {
-            const { data, error } = await supabaseClient.from('taxas_entrega').select('*').order('bairro');
-            if (!error) {
-                taxasLocais = data;
-                const container = document.getElementById('lista-taxas');
-                container.innerHTML = data.map(t => `
-                    <div class="bg-[#1a1d23] p-5 rounded-2xl border border-gray-800 flex justify-between items-center shadow-lg hover:border-[#f48c2e] transition-all duration-300">
-                        <div>
-                            <span class="font-black uppercase text-white tracking-tight">${t.bairro}</span>
-                            <p class="text-[#a3e635] font-bold text-xs uppercase">Taxa: R$ ${parseFloat(t.valor).toFixed(2)}</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="prepararEdicao(${t.id})" class="text-blue-400 hover:bg-blue-500/10 p-2 rounded-lg transition-colors">
-                                <i data-lucide="pencil" size="18"></i>
-                            </button>
-                            <button onclick="deletarTaxa(${t.id})" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg transition-colors">
-                                <i data-lucide="trash-2" size="18"></i>
-                            </button>
-                        </div>
-                    </div>
-                `).join('');
-                lucide.createIcons();
-            }
-        }
-
-        /**
-         * Remove o bairro sem confirmação (Direto ao ponto)
-         */
-        async function deletarTaxa(id) {
-            const { error } = await supabaseClient.from('taxas_entrega').delete().eq('id', id);
-            if (error) alert("Erro ao deletar: " + error.message);
-            else carregarTaxas();
-        }
-
-        function prepararEdicao(id) {
-            const taxa = taxasLocais.find(t => t.id === id);
-            if (!taxa) return;
-
-            document.getElementById('taxa-id').value = taxa.id;
-            document.getElementById('bairro').value = taxa.bairro;
-            document.getElementById('valor').value = taxa.valor;
-
-            document.getElementById('titulo-form').innerText = "Editando: " + taxa.bairro;
-            document.getElementById('btn-submit').innerText = "Atualizar Bairro";
-            document.getElementById('btn-cancelar').classList.remove('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function resetarFormulario() {
-            document.getElementById('form-taxa').reset();
-            document.getElementById('taxa-id').value = "";
-            document.getElementById('titulo-form').innerText = "Cadastrar Bairro";
-            document.getElementById('btn-submit').innerText = "Salvar Bairro";
-            document.getElementById('btn-cancelar').classList.add('hidden');
+            btn.disabled = false;
         }
 
         function logout() { 
@@ -149,7 +177,7 @@
             window.location.href = "login.html"; 
         }
 
-        carregarTaxas();
+        lucide.createIcons();
     </script>
 </body>
 </html>
