@@ -4,7 +4,7 @@
     <link rel="icon" href="logo-sem-fundo.png" type="image/x-icon">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CrazyDog - Taxas de Entrega</title>
+    <title>CrazyDog - Calculadora de frete</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -19,7 +19,7 @@
     <div class="max-w-4xl mx-auto">
         <header class="flex justify-between items-center mb-10">
             <h1 class="text-2xl font-black uppercase italic text-[#f48c2e] flex items-center gap-3">
-                <i data-lucide="truck"></i> Simulador de Frete
+                <i data-lucide="truck"></i> Calculadora de Frete
             </h1>
             <div class="flex gap-4">
                 <a href="admin.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all uppercase font-bold flex items-center">Voltar</a>
@@ -107,7 +107,7 @@
                                 = Math.max(distanciaKm * 3, 5);
                             }
                             else if (distanciaKm <= 4) {
-                                valorFinal = 4 + (distanciaKm * 0.30);
+                                valorFinal = 6 + (distanciaKm * 0.30);
                             }
                             else if (distanciaKm <= 5) {
                                 valorFinal = 5 + (distanciaKm * 0.30);
