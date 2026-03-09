@@ -35,8 +35,9 @@
     <header class="bg-[#16191e] p-6 border-b border-gray-800 shadow-xl">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="logo-sem-fundo.png" alt="Logo" class="w-30 h-12 object-contain">
-                <div><p class="text-[15px] text-gray-500 font-bold uppercase tracking-[0.2em]">Painel Administrativo</p></div>
+                <a href="index.html" class="flex items-center hover:opacity-80 transition-all">
+                    <img src="logo-sem-fundo.png" alt="Logo" class="w-30 h-12 object-contain">
+                </a>
             </div>
             <div class="flex items-center gap-4">
                 <a href="index.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors uppercase font-bold text-white">Ver Site</a>
@@ -105,7 +106,7 @@
                 <i data-lucide="alert-triangle" size="20"></i> Atenção: Reposição Necessária
             </h2>
             <div id="lista-alertas" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                </div>
+            </div>
         </div>
 
     </main>
@@ -160,7 +161,7 @@
                 .from('lanches')
                 .select('nome, estoque, categoria')
                 .neq('categoria', 'Lanche') // Ignora lanches na lista de alertas
-                .lt('estoque', 6)
+                .lt('estoque', 2)
                 .order('estoque', { ascending: true });
 
             const containerAlerta = document.getElementById('estoque-alerta-container');
