@@ -63,7 +63,6 @@
             top: 30px;
             width: 180px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            italic: true;
         }
 
         .ribbon-lancamento { background-color: #a3e635; } /* Verde */
@@ -265,7 +264,7 @@
                             } 
                             else if (distanciaKm <= 2) {
                                 valorFinal 
-                                = Math.max(distanciaKm * 4.20, 5);
+                                = Math.max(distanciaKm * 3.60, 5);
                             }
                             else if (distanciaKm <= 3) {
                                 valorFinal 
@@ -563,8 +562,7 @@
             if (tipoEntrega === 'delivery') {
                 msgWhatsApp += `\n*ENDEREÇO:* ${rua}, ${num}`;
                 msgWhatsApp += `\n*BAIRRO:* ${document.getElementById('bairro_display').value}`;
-                if (document.getElementById('referencia').value) msgWhatsApp += `\n*REF:* ${document.getElementById('referencia').value}`;
-                msgWhatsApp += `\n*DISTÂNCIA:* ${bairroNome}`;
+                if (document.getElementById('referencia').value) msgWhatsApp += `\n*REF:* ${document.getElementById('referencia').value}\n------------------------------\n`;
                 msgWhatsApp += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
             }
             
