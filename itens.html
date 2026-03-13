@@ -35,12 +35,41 @@
             <form id="form-produto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="hidden" id="edit-index" value="-1">
                 
-                <input type="text" id="nome" placeholder="Nome do Item" required class="input-field p-4 rounded-xl">
-                <input type="number" id="preco" placeholder="Preço (ex: 25.50)" step="0.01" required class="input-field p-4 rounded-xl">
-                
                 <div class="md:col-span-2">
-                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Quantidade disponível (Estoque)</label>
-                    <input type="number" id="estoque" placeholder="Ex: 50" required class="input-field w-full p-4 rounded-xl font-bold">
+                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Categoria</label>
+                    <select id="categoria" onchange="toggleCampos()" class="input-field w-full p-4 rounded-xl outline-none">
+                        <option value="Lanche">Lanche</option>
+                        <option value="Doce">Doce</option>
+                        <option value="Bebida">Bebida</option>
+                        <option value="Adicional">Adicional</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-1">
+                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Nome</label>
+                    <input type="text" id="nome" placeholder="Nome do Item" required class="input-field w-full p-4 rounded-xl font-bold">
+                </div>
+                
+                 <div class="md:col-span-1">
+                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Preço</label>
+                    <input type="number" id="preco" placeholder="Preço (ex: 25.50)" step="0.01" required class="input-field w-full p-4 rounded-xl font-bold">
+                </div>
+                
+                <div class="md:col-span-2" id="div-quantidade">
+                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Quantidade (Estoque)</label>
+                    <input type="number" id="estoque" placeholder="Ex: 50" class="input-field w-full p-4 rounded-xl font-bold">
+                </div>
+
+                <div class="md:col-span-2 hidden" id="div-btn-sabores">
+                    <button type="button" onclick="toggleModoSabores()" id="btn-toggle-sabores" class="text-[10px] bg-gray-800 text-[#a3e635] px-4 py-2 rounded-lg font-bold uppercase border border-gray-700 hover:bg-gray-700 transition-all flex items-center gap-2">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Múltiplos Sabores
+                    </button>
+                </div>
+
+                <div class="md:col-span-2 hidden" id="div-subitens">
+                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Subitens (Sabores e Estoque)</label>
+                    <div id="container-linhas-subitens" class="space-y-3"></div>                   
+                    <p class="text-[10px] text-gray-500 mt-2">* Deixe o nome vazio para ignorar a linha.</p>
                 </div>
 
                 <div class="md:col-span-2">
@@ -52,16 +81,6 @@
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Descrição</label>
                     <input type="text" id="desc" placeholder="Descrição Curta" required class="input-field w-full p-4 rounded-xl font-bold">
-                </div>
-                
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Categoria</label>
-                    <select id="categoria" class="input-field w-full p-4 rounded-xl outline-none">
-                        <option value="Lanche">Lanche</option>
-                        <option value="Doce">Doce</option>
-                        <option value="Bebida">Bebida</option>
-                        <option value="Adicional">Adicional</option>
-                    </select>
                 </div>
 
                 <div class="md:col-span-2">
@@ -106,6 +125,49 @@
             }
         }
 
+        let estadoSubitens = [{ nome: '', qtd: '' }];
+
+        // Função que desenha as linhas na tela
+        function renderizarLinhasSubitens() {
+            const container = document.getElementById('container-linhas-subitens');
+            
+            container.innerHTML = estadoSubitens.map((linha, index) => {
+                const isUltima = index === estadoSubitens.length - 1;
+                
+                return `
+                <div class="flex gap-2 items-center">
+                    <input type="text" placeholder="Sabor (Ex: Chocolate)" value="${linha.nome}" 
+                        onchange="atualizarLinha(${index}, 'nome', this.value)" 
+                        class="input-field flex-1 p-3 rounded-xl font-bold">
+                        
+                    <input type="number" placeholder="Qtd" value="${linha.qtd}" 
+                        onchange="atualizarLinha(${index}, 'qtd', this.value)" 
+                        class="input-field w-24 p-3 rounded-xl font-bold text-center">
+                        
+                    ${isUltima ? `
+                        <button type="button" onclick="adicionarLinha()" class="bg-[#a3e635] text-[#1a1d23] w-12 h-12 rounded-xl flex items-center justify-center hover:scale-105 transition-all">
+                            <i data-lucide="plus" class="w-5 h-5"></i>
+                        </button>
+                    ` : `
+                        <button type="button" onclick="removerLinha(${index})" class="bg-red-600 text-white w-12 h-12 rounded-xl flex items-center justify-center hover:scale-105 transition-all">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    `}
+                </div>`;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        // Funções de controle
+        function atualizarLinha(index, campo, valor) { estadoSubitens[index][campo] = valor; }
+        function adicionarLinha() { estadoSubitens.push({ nome: '', qtd: '' }); renderizarLinhasSubitens(); }
+        function removerLinha(index) { 
+            estadoSubitens.splice(index, 1); 
+            if(estadoSubitens.length === 0) estadoSubitens.push({ nome: '', qtd: '' }); // Mantém pelo menos 1
+            renderizarLinhasSubitens(); 
+        }
+
         function renderCategoriasAdmin() {
             const container = document.getElementById('categorias-container');
             const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional'];
@@ -115,36 +177,66 @@
                 const itens = lanches.filter(l => l.categoria === cat);
                 
                 const section = document.createElement('div');
-                section.innerHTML = `
+                
+                // Cabeçalho da categoria
+                let htmlContent = `
                     <div class="flex items-center gap-2 mb-4 border-b border-gray-700 pb-2">
                         <i data-lucide="layers" class="text-[#a3e635] w-4 h-4"></i>
                         <h3 class="text-sm font-black uppercase tracking-widest text-gray-400">${cat}</h3>
                     </div>
                     <div id="lista-${cat}" class="space-y-2">
-                        ${itens.map(item => `
-                            <div data-id="${item.id}" class="bg-[#1a1d23] p-4 rounded-2xl flex justify-between items-center border border-gray-800 shadow-sm">
-                                <div class="flex items-center gap-4">
-                                    <div class="drag-handle text-gray-600 hover:text-white transition-colors">
-                                        <i data-lucide="grip-vertical"></i>
-                                    </div>
-                                    <img src="${item.imagem}" class="w-10 h-10 rounded-lg object-cover">
-                                    <div>
-                                        <p class="font-bold uppercase italic text-xs text-white">${item.nome}</p>
-                                        <p class="text-[#a3e635] text-[10px] font-bold">R$ ${parseFloat(item.preco).toFixed(2)} | Estoque: ${item.estoque || 0}</p>
-                                    </div>
+                `;
+
+                // Mapeia os itens e calcula o estoque dinamicamente
+                htmlContent += itens.map(item => {
+                    
+                    // --- LÓGICA DE SOMA DO ESTOQUE ---
+                    let estoqueExibicao = item.estoque || 0;
+                    let detalhesSaboresHTML = ''; 
+
+                    if (item.categoria === 'Doce' && item.subitens && item.subitens.trim() !== '') {
+                        estoqueExibicao = item.subitens.split(',').reduce((total, par) => {
+                            return total + (parseInt(par.split(':')[1]) || 0);
+                        }, 0);
+
+                        // Limpando as tags antigas e usando o " | " como separador
+                        const saboresFormatados = item.subitens.split(',').map(par => {
+                            const [nome, qtd] = par.split(':');
+                            return `${nome.trim()}: ${qtd.trim()}`;
+                        }).join(' | ');
+
+                        // INJETANDO EXATAMENTE AS MESMAS CLASSES DO <P> DE CIMA
+                        detalhesSaboresHTML = `<p class="text-[#a3e635] text-[10px] font-bold">${saboresFormatados}</p>`;
+                    }
+                    // ---------------------------------
+
+                    return `
+                        <div data-id="${item.id}" class="bg-[#1a1d23] p-4 rounded-2xl flex justify-between items-center border border-gray-800 shadow-sm">
+                            <div class="flex items-center gap-4">
+                                <div class="drag-handle text-gray-600 hover:text-white transition-colors">
+                                    <i data-lucide="grip-vertical"></i>
                                 </div>
-                                <div class="flex gap-1">
-                                    <button onclick="prepararEdicaoPeloId(${item.id})" class="text-blue-400 p-2 hover:bg-blue-500/10 rounded-lg">
-                                        <i data-lucide="pencil" class="w-4 h-4"></i>
-                                    </button>
-                                    <button onclick="removerLanchePeloId(${item.id})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg">
-                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                    </button>
+                                <img src="${item.imagem}" class="w-10 h-10 rounded-lg object-cover">
+                                <div>
+                                    <p class="font-bold uppercase italic text-xs text-white">${item.nome}</p>
+                                    <p class="text-[#a3e635] text-[10px] font-bold">R$ ${parseFloat(item.preco).toFixed(2)} | Total: ${estoqueExibicao}</p>
+                                    ${detalhesSaboresHTML}
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
+                            <div class="flex gap-1">
+                                <button onclick="prepararEdicaoPeloId(${item.id})" class="text-blue-400 p-2 hover:bg-blue-500/10 rounded-lg">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="removerLanchePeloId(${item.id})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                htmlContent += `</div>`;
+                section.innerHTML = htmlContent;
                 container.appendChild(section);
 
                 new Sortable(document.getElementById(`lista-${cat}`), {
@@ -156,9 +248,67 @@
                     }
                 });
             });
+            
             lucide.createIcons();
         }
 
+        // Variável de controle
+        let modoSaboresAtivo = false;
+
+        // 1. O botão que o utilizador clica (Este sim pode limpar dados)
+        function toggleModoSabores() {
+            modoSaboresAtivo = !modoSaboresAtivo;
+            
+            if (modoSaboresAtivo) {
+                document.getElementById('estoque').value = 0; // O utilizador ligou os sabores, zeramos o stock geral
+            } else {
+                estadoSubitens = [{ nome: '', qtd: '' }]; // O utilizador desligou, limpamos as linhas
+            }
+            
+            aplicarVisualModoSabores();
+        }
+
+        // 2. A função que apenas esconde e mostra as Divs (Sem apagar nada!)
+        function aplicarVisualModoSabores() {
+            const divQtde = document.getElementById('div-quantidade');
+            const divSubitens = document.getElementById('div-subitens');
+            const btnToggle = document.getElementById('btn-toggle-sabores');
+
+            if (modoSaboresAtivo) {
+                divQtde.classList.add('hidden');
+                divSubitens.classList.remove('hidden');
+                btnToggle.innerHTML = `<i data-lucide="minus-circle" class="w-4 h-4"></i> Voltar para Estoque Único`;
+                btnToggle.classList.replace('text-[#a3e635]', 'text-red-400');
+            } else {
+                divQtde.classList.remove('hidden');
+                divSubitens.classList.add('hidden');
+                btnToggle.innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4"></i> Adicionar Múltiplos Sabores`;
+                btnToggle.classList.replace('text-red-400', 'text-[#a3e635]');
+            }
+            
+            renderizarLinhasSubitens();
+            lucide.createIcons();
+        }
+
+        // 3. O gatilho principal das categorias
+        function toggleCampos() {
+            const categoria = document.getElementById('categoria').value;
+            const divBtnSabores = document.getElementById('div-btn-sabores');
+            const divQtde = document.getElementById('div-quantidade');
+            const divSubitens = document.getElementById('div-subitens');
+
+            if (categoria === 'Doce') {
+                divBtnSabores.classList.remove('hidden');
+                aplicarVisualModoSabores(); // Apenas ajusta o visual, preservando a memória
+            } else {
+                divBtnSabores.classList.add('hidden');
+                modoSaboresAtivo = false; 
+                estadoSubitens = [{ nome: '', qtd: '' }];
+                divQtde.classList.remove('hidden');
+                divSubitens.classList.add('hidden');
+                renderizarLinhasSubitens();
+            }
+        }
         async function salvarNovaOrdem() {
             const itensOrdenados = [];
             ['Lanche', 'Doce', 'Bebida', 'Adicional'].forEach(cat => {
@@ -198,14 +348,26 @@
             btn.disabled = true;
             btn.innerText = "Salvando...";
 
+            // --- NOVA LÓGICA DE SUBITENS (Ajuste 3 A) ---
+            // Pega as linhas, ignora as vazias e junta no formato "Chocolate:10, Ninho:3"
+            const stringFinalSubitens = estadoSubitens
+                .filter(linha => linha.nome && linha.nome.trim() !== '') 
+                .map(linha => `${linha.nome.trim()}:${linha.qtd || 0}`)
+                .join(', ');
+            // --------------------------------------------
+
             const lancheData = {
                 nome: document.getElementById('nome').value,
                 preco: parseFloat(document.getElementById('preco').value),
                 descricao: document.getElementById('desc').value,
                 categoria: document.getElementById('categoria').value,
                 imagem: imageData,
-                estoque: parseInt(document.getElementById('estoque').value),
-                tag: document.getElementById('tag').value // CORREÇÃO: ADICIONADA CAPTURA DA TAG
+                estoque: parseInt(document.getElementById('estoque').value) || 0,
+                
+                // Substituímos a leitura do input pela string que acabamos de montar
+                subitens: stringFinalSubitens, 
+                
+                tag: document.getElementById('tag').value
             };
 
             let error;
@@ -235,8 +397,25 @@
             document.getElementById('desc').value = item.descricao;
             document.getElementById('categoria').value = item.categoria;
             document.getElementById('estoque').value = item.estoque || 0;
-            document.getElementById('tag').value = item.tag || ""; // CORREÇÃO: PREENCHE A TAG NA EDIÇÃO
+            document.getElementById('tag').value = item.tag || "";
             
+            // Análise da Base de Dados
+            const stringDoBanco = item.subitens || '';
+            
+            if (stringDoBanco.trim() !== '') {
+                modoSaboresAtivo = true; // Tem sabores, liga o modo!
+                estadoSubitens = stringDoBanco.split(',').map(par => {
+                    const [nome, qtd] = par.split(':');
+                    return { nome: nome ? nome.trim() : '', qtd: qtd ? qtd.trim() : '' };
+                });
+            } else {
+                modoSaboresAtivo = false; // É um doce simples (ou lanche), desliga o modo.
+                estadoSubitens = [{ nome: '', qtd: '' }];
+            }
+            
+            // Agora sim, pede para atualizar o ecrã com a informação carregada
+            toggleCampos();
+
             document.getElementById('titulo-form').innerText = "Editando: " + item.nome;
             document.getElementById('btn-submit').innerText = "Atualizar";
             document.getElementById('btn-cancelar').classList.remove('hidden');
@@ -247,12 +426,16 @@
         function cancelarEdicao() {
             form.reset();
             document.getElementById('edit-index').value = "-1";
-            document.getElementById('tag').value = ""; // CORREÇÃO: RESET DA TAG AO CANCELAR/LIMPAR
+            document.getElementById('tag').value = "";
             document.getElementById('titulo-form').innerText = "Cadastrar Novo Item";
             document.getElementById('btn-submit').innerText = "Salvar no Cardápio";
             document.getElementById('btn-submit').disabled = false;
             document.getElementById('btn-cancelar').classList.add('hidden');
             document.getElementById('msg-imagem-edit').classList.add('hidden');
+            
+            estadoSubitens = [{ nome: '', qtd: '' }];
+            renderizarLinhasSubitens();
+            toggleCampos();
         }
 
         async function removerLanchePeloId(id) {
@@ -272,6 +455,8 @@
             localStorage.removeItem('is_admin');
             window.location.href = "login.html";
         }
+        toggleCampos();
+        renderizarLinhasSubitens();
     </script>
 </body>
 </html>

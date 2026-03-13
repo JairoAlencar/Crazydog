@@ -111,60 +111,85 @@
     <div id="cart-overlay" class="fixed inset-0 bg-black/80 z-20 hidden backdrop-blur-sm" onclick="toggleCart()"></div>
     
     <div id="cart-drawer" class="cart-drawer fixed right-0 top-0 h-full w-full max-w-lg bg-[#1a1d23] shadow-2xl z-30 flex flex-col">
-        <div class="p-6 flex justify-between items-center border-b border-gray-800">
-            <h2 class="font-black italic uppercase text-[#f48c2e]">Seu Pedido</h2>
-            <button onclick="toggleCart()" class="text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
+    
+        <div id="carrinho-step-1" class="flex flex-col h-full">
+            <div class="p-6 flex justify-between items-center border-b border-gray-800">
+                <h2 class="font-black italic uppercase text-[#f48c2e]">Seu Pedido</h2>
+                <button onclick="toggleCart()" class="text-gray-500 hover:text-white transition-colors"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+
+            <div class="p-6 bg-[#16191e] border-t border-gray-800">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-gray-500 font-bold uppercase text-xs">Subtotal</span>
+                    <span id="subtotal-step1" class="text-white font-black text-xl">R$ 0,00</span> 
+                </div>
+                <button onclick="avancarCheckout()" class="w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.02] transition-all flex justify-center items-center gap-2">
+                    Continuar <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
-        
-        <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
 
-        <div class="p-6 bg-[#16191e] border-t border-gray-800 space-y-4">
-            <div>
-                <label class="block text-[10px] font-black uppercase text-gray-500 mb-1 tracking-widest">Cupom</label>
-                <div class="flex gap-2">
-                    <input type="text" id="cupom-input" placeholder="CÓDIGO" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs uppercase font-black outline-none focus:border-[#a3e635]">
-                    <button onclick="aplicarCupom()" class="bg-[#a3e635] text-[#1a1d23] px-4 rounded-xl font-black text-xs uppercase">Ok</button>
+        <div id="carrinho-step-2" class="flex flex-col h-full hidden">
+            <div class="p-6 flex justify-between items-center border-b border-gray-800">
+                <div class="flex items-center gap-4">
+                    <button onclick="voltarParaItens()" class="text-gray-500 hover:text-white transition-colors bg-gray-800 p-2 rounded-lg"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+                    <h2 class="font-black italic uppercase text-[#f48c2e]">Entrega</h2>
                 </div>
-                <p id="cupom-msg" class="text-[10px] mt-1 font-bold hidden"></p>
+                <button onclick="toggleCart()" class="text-gray-500 hover:text-white transition-colors"><i data-lucide="x"></i></button>
             </div>
 
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black uppercase text-gray-500 tracking-widest text-center">Forma de Entrega</label>
-                <div class="flex gap-2 p-1 bg-[#23272f] rounded-xl">
-                    <button onclick="setTipoEntrega('retirada')" id="btn-retirada" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23]">Retirada</button>
-                    <button onclick="setTipoEntrega('delivery')" id="btn-delivery" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400">Motoboy</button>
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-[#1a1d23]">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1 tracking-widest">Cupom de Desconto</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="cupom-input" placeholder="CÓDIGO" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs uppercase font-black outline-none focus:border-[#a3e635]">
+                        <button onclick="aplicarCupom()" class="bg-[#a3e635] text-[#1a1d23] px-4 rounded-xl font-black text-xs uppercase hover:scale-105 transition-all">Ok</button>
+                    </div>
+                    <p id="cupom-msg" class="text-[10px] mt-1 font-bold hidden"></p>
                 </div>
 
-                <div id="secao-endereco" class="hidden space-y-2">
-                    <div class="flex gap-2">
-                        <input type="text" id="cep" placeholder="CEP" class="w-1/3 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#a3e635]" onblur="buscarEnderecoViaCEP()">
-                        <input type="text" id="rua" placeholder="Rua" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none text-gray-400" readonly>
-                    </div>
-                    
-                    <div class="flex gap-2">
-                        <input type="text" id="numero" placeholder="Nº" class="w-1/4 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#f48c2e]">
-                        <input type="text" id="bairro_display" placeholder="Bairro" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none text-gray-400" readonly>
+                <div class="space-y-3">
+                    <label class="block text-[10px] font-black uppercase text-gray-500 tracking-widest text-center border-b border-gray-800 pb-2">Forma de Entrega</label>
+                    <div class="flex gap-2 p-1 bg-[#23272f] rounded-xl">
+                        <button onclick="setTipoEntrega('retirada')" id="btn-retirada" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23] transition-all">Retirada</button>
+                        <button onclick="setTipoEntrega('delivery')" id="btn-delivery" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400 transition-all">Motoboy</button>
                     </div>
 
-                    <input type="text" id="referencia" placeholder="Ponto de Referência (Ex: Próximo ao mercado)" class="w-full bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#a3e635]">
+                    <div id="secao-endereco" class="hidden space-y-2 mt-4">
+                        <div class="flex gap-2">
+                            <input type="text" id="cep" placeholder="CEP" class="w-1/3 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#a3e635]" onblur="buscarEnderecoViaCEP()">
+                            <input type="text" id="rua" placeholder="Rua" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none text-gray-400" readonly>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <input type="text" id="numero" placeholder="Nº" class="w-1/4 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#f48c2e]">
+                            <input type="text" id="bairro_display" placeholder="Bairro" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none text-gray-400" readonly>
+                        </div>
 
-                    <button type="button" id="btn-calc-frete" onclick="atualizarFreteGoogle()" class="w-full py-2 bg-gray-800 text-[#a3e635] text-[10px] font-black uppercase rounded-xl border border-gray-700 hover:bg-gray-700 transition-all">
-                        Calcular Frete
-                    </button>
+                        <input type="text" id="referencia" placeholder="Ponto de Referência" class="w-full bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#a3e635]">
+
+                        <button type="button" id="btn-calc-frete" onclick="atualizarFreteGoogle()" class="w-full py-3 mt-2 bg-gray-800 text-[#a3e635] text-[10px] font-black uppercase rounded-xl border border-gray-700 hover:bg-gray-700 transition-all">
+                            Calcular Frete
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center border-t border-gray-800 pt-4">
-                <span class="text-gray-500 font-bold uppercase text-xs">Total:</span>
-                <div class="text-right">
-                    <span id="txt-frete" class="text-[10px] text-gray-400 block uppercase font-bold">Frete: R$ 0,00</span>
-                    <span id="cart-total" class="text-2xl font-black text-[#a3e635]">R$ 0,00</span>
+            <div class="p-6 bg-[#16191e] border-t border-gray-800">
+                <div class="flex justify-between items-end mb-4">
+                    <span class="text-gray-500 font-bold uppercase text-xs mb-1">Total a pagar:</span>
+                    <div class="text-right">
+                        <span id="txt-frete" class="text-[10px] text-gray-400 block uppercase font-bold mb-1">Frete: R$ 0,00</span>
+                        <span id="cart-total" class="text-3xl font-black text-[#a3e635]">R$ 0,00</span>
+                    </div>
                 </div>
-            </div>
 
-            <button id="btn-finalizar" onclick="finalizarPedido()" disabled class="w-full py-4 rounded-2xl font-black uppercase bg-gray-700 text-gray-500 transition-all">
-                Finalizar no WhatsApp
-            </button>
+                <button id="btn-finalizar" onclick="finalizarPedido()" disabled class="w-full py-4 bg-gray-700 text-gray-500 font-black uppercase rounded-2xl transition-all">
+                    Finalizar no WhatsApp
+                </button>
+            </div>
         </div>
     </div>
 
@@ -196,7 +221,7 @@
     </div>
 
     <script>
-// Puxando API para calculo do frete
+        // Puxando API para calculo do frete
         const GOOGLE_MAPS_API_KEY = 'AIzaSyC2N-XgovNRshXkA9XKgk-O0jwevjYhq5w';
         const ENDERECO_ORIGEM = 'Rua Adão Mariano Gomes, 370 - Jardim Brasil, Itapetininga - SP';
 
@@ -247,7 +272,7 @@
             return new Promise((resolve) => {
                 const service = new google.maps.DistanceMatrixService();
                 service.getDistanceMatrix({
-                    origins: ["Rua Adão Mariano Gomes, 370 - Jardim Brasil, Itapetininga - SP"],
+                    origins: [ENDERECO_ORIGEM],
                     destinations: [enderecoDestino],
                     travelMode: google.maps.TravelMode.DRIVING,
                 }, (response, status) => {
@@ -257,46 +282,19 @@
                             const distanciaKm = element.distance.value / 1000;
                             let valorFinal = 0;
 
-                            // --- REGRAS DE ESCALONAMENTO DO CRAZYDOG ---
-                            if (distanciaKm <= 1) {
-                                valorFinal 
-                                = Math.max(distanciaKm * 3.65, 5);
-                            } 
-                            else if (distanciaKm <= 2) {
-                                valorFinal 
-                                = Math.max(distanciaKm * 3.60, 5);
-                            }
-                            else if (distanciaKm <= 3) {
-                                valorFinal 
-                                = Math.max(distanciaKm * 3, 5);
-                            }
-                            else if (distanciaKm <= 4) {
-                                valorFinal = 6 + (distanciaKm * 0.30);
-                            }
-                            else if (distanciaKm <= 5) {
-                                valorFinal = 5 + (distanciaKm * 0.30);
-                            }
-                            else if (distanciaKm <= 6) {
-                                valorFinal = 6 + (distanciaKm * 0.35);
-                            }
-                            else if (distanciaKm <= 7) {
-                                valorFinal = 7 + (distanciaKm * 0.35);
-                            }
-                            else if (distanciaKm <= 8) {
-                                valorFinal = 9 + (distanciaKm * 0.45); 
-                            } 
-                            else {
-                                valorFinal = 10 + (distanciaKm * 0.40);
-                            }
+                            if (distanciaKm <= 1) valorFinal = Math.max(distanciaKm * 3.65, 5);
+                            else if (distanciaKm <= 2) valorFinal = Math.max(distanciaKm * 3.60, 5);
+                            else if (distanciaKm <= 3) valorFinal = Math.max(distanciaKm * 3, 5);
+                            else if (distanciaKm <= 4) valorFinal = 6 + (distanciaKm * 0.30);
+                            else if (distanciaKm <= 5) valorFinal = 5 + (distanciaKm * 0.30);
+                            else if (distanciaKm <= 6) valorFinal = 6 + (distanciaKm * 0.35);
+                            else if (distanciaKm <= 7) valorFinal = 7 + (distanciaKm * 0.35);
+                            else if (distanciaKm <= 8) valorFinal = 9 + (distanciaKm * 0.45); 
+                            else valorFinal = 10 + (distanciaKm * 0.40);
 
-                            // Arredondamento para o teto (inteiro)
                             const valorArredondado = Math.ceil(valorFinal);
 
-                            resolve({ 
-                                sucesso: true, 
-                                valor: valorArredondado, 
-                                km: distanciaKm.toFixed(1) 
-                            });
+                            resolve({ sucesso: true, valor: valorArredondado, km: distanciaKm.toFixed(1) });
                         } else {
                             resolve({ sucesso: false, erro: "Endereço não localizado." });
                         }
@@ -315,7 +313,6 @@
             if (!rua || !num) { alert("Preencha CEP e Número!"); return; }
 
             const btn = document.getElementById('btn-calc-frete');
-            const textoOriginal = btn.innerText;
             btn.innerText = "CALCULANDO...";
             btn.disabled = true;
 
@@ -354,52 +351,48 @@
             atualizarCarrinho();
         }
 
-        // --- LÓGICA DO CARDÁPIO E CARRINHO ---
-
         function renderizarCardapio() {
             const container = document.getElementById('cardapio');
+            if (!container) return;
+
             const cats = ['Lanche', 'Doce', 'Bebida'];
             const nomesExibicao = { 'Lanche': 'Lanches', 'Doce': 'Doces', 'Bebida': 'Bebidas' };
-            
-            container.innerHTML = ''; 
+            let htmlFinal = ''; 
 
             cats.forEach(cat => {
                 const itens = LANCHES.filter(i => i.categoria === cat);
+                
                 if (itens.length > 0) {
-                    container.innerHTML += `
+                    htmlFinal += `
                         <div class="col-span-full mt-10 mb-4 border-l-4 border-[#f48c2e] pl-4">
                             <h3 class="text-2xl font-black italic text-[#a3e635]">${nomesExibicao[cat]}</h3>
                         </div>`;
 
                     itens.forEach(item => {
-                        // Lógica de Estoque
-                        const temEstoque = item.categoria === 'Lanche' || item.estoque > 0;
-                        const avisoUltimaUnidade = item.categoria !== 'Lanche' && item.estoque === 1;
-
-                        // Lógica da Faixa Transversal (Ribbon)
-                        let ribbonHtml = '';
-                        if (item.tag === 'lancamento') {
-                            ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-lancamento">Lançamento</div></div>`;
-                        } else if (item.tag === 'destaque') {
-                            ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-destaque">Mais Vendido</div></div>`;
-                        } else if (item.tag == "promocao") {
-                            ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-promocao">Promoção</div></div>`;
+                        let estoqueCalculado = item.estoque || 0;
+                        
+                        if (item.categoria === 'Doce' && item.subitens && item.subitens.trim() !== '') {
+                            estoqueCalculado = item.subitens.split(',').reduce((total, par) => {
+                                const partes = par.split(':');
+                                return total + (parseInt(partes[1]) || 0);
+                            }, 0);
                         }
 
-                        container.innerHTML += `
+                        const temEstoque = item.categoria === 'Lanche' || estoqueCalculado > 0;
+                        const avisoUltimaUnidade = item.categoria !== 'Lanche' && estoqueCalculado === 1;
+                    
+                        let ribbonHtml = '';
+                        if (item.tag === 'lancamento') ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-lancamento">Lançamento</div></div>`;
+                        else if (item.tag === 'destaque') ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-destaque">Mais Vendido</div></div>`;
+                        else if (item.tag == "promocao") ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-promocao">Promoção</div></div>`;
+
+                        htmlFinal += `
                         <div class="orange-border-card bg-[#2d3139] overflow-hidden flex flex-col shadow-lg relative ${!temEstoque ? 'opacity-50 grayscale' : ''}">
-                            
                             ${ribbonHtml}
-
-                            ${!temEstoque ? `
-                                <div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40">
-                                    <span class="bg-red-600 text-white text-[10px] font-black uppercase px-4 py-1 rounded-full italic shadow-xl">Esgotado</span>
-                                </div>` : ''}
-
-                            ${avisoUltimaUnidade ? `
-                                <div class="absolute top-4 right-4 z-10">
-                                    <span class="bg-[#f48c2e] text-[#1a1d23] text-[9px] font-black uppercase px-2 py-1 rounded-lg animate-pulse">⚠️ Última</span>
-                                </div>` : ''}
+                            ${!temEstoque ? `<div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40"><span class="bg-red-600 text-white text-[10px] font-black uppercase px-4 py-1 rounded-full italic shadow-xl">Esgotado</span></div>` : ''}
+                            <!--
+                                ${avisoUltimaUnidade ? `<div class="absolute top-4 right-4 z-10"><span class="bg-[#f48c2e] text-[#1a1d23] text-[9px] font-black uppercase px-2 py-1 rounded-lg animate-pulse">⚠️ Última</span></div>` : ''}
+                            -->
 
                             <div class="h-48 overflow-hidden relative">
                                 <img src="${item.imagem}" class="w-full h-full object-cover">
@@ -410,12 +403,14 @@
                                 <p class="text-gray-400 text-xs mt-2 flex-1 leading-tight">${item.descricao || ''}</p>
                                 
                                 <div class="flex justify-between items-center mt-4">
-                                    <span class="text-[#a3e635] font-black text-xl">R$ ${parseFloat(item.preco).toFixed(2)}</span>
-                                    <button 
-                                        onclick="${temEstoque ? `adicionarNoCarrinho(${item.id})` : ''}" 
-                                        ${!temEstoque ? 'disabled' : ''} 
-                                        class="p-3 rounded-xl transition-all shadow-lg 
-                                        ${temEstoque ? 'bg-[#f48c2e] hover:scale-110 active:scale-95' : 'bg-gray-700 cursor-not-allowed'}">
+                                    <!-- 
+                                        <div class="flex flex-col">
+                                        <span class="text-[#a3e635] font-black text-xl">R$ ${parseFloat(item.preco).toFixed(2)}</span>
+                                        ${item.categoria !== 'Lanche' ? `<span class="text-[9px] text-gray-500 font-bold uppercase mt-1">${temEstoque ? `Estoque: ${estoqueCalculado}` : 'Sem estoque'}</span>` : ''}
+                                    </div>
+                                    -->
+
+                                    <button onclick="${temEstoque ? `adicionarNoCarrinho(${item.id})` : ''}" ${!temEstoque ? 'disabled' : ''} class="p-3 rounded-xl transition-all shadow-lg ${temEstoque ? 'bg-[#f48c2e] hover:scale-110 active:scale-95' : 'bg-gray-700 cursor-not-allowed'}">
                                         <i data-lucide="${temEstoque ? 'plus' : 'slash'}" size="20" class="text-white"></i>
                                     </button>
                                 </div>
@@ -424,31 +419,59 @@
                     });
                 }
             });
+            container.innerHTML = htmlFinal;
             lucide.createIcons();
         }
 
         function adicionarNoCarrinho(id) {
             const item = LANCHES.find(l => l.id == id);
             if (!item) return;
-            if (item.categoria !== 'Lanche') {
+
+            if (item.categoria !== 'Lanche' && (!item.subitens || item.subitens.trim() === "")) {
                 carrinho.push({ ...item, adicionais: [], totalItem: parseFloat(item.preco), observacao: "" });
                 atualizarCarrinho();
                 if(!document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
                 return;
             }
+
             itemSendoEditado = { ...item };
             adicionaisSelecionados = [];
             document.getElementById('modal-titulo').innerText = item.nome;
-            document.getElementById('modal-preco-base').innerText = `Base: R$ ${parseFloat(item.preco).toFixed(2)}`;
-            const adds = LANCHES.filter(l => l.categoria === 'Adicional');
-            document.getElementById('lista-adicionais-modal').innerHTML = adds.map(add => `
-                <label class="flex items-center justify-between p-4 bg-[#2d3139] rounded-2xl border border-gray-700 cursor-pointer hover:border-[#a3e635]">
-                    <div class="flex items-center gap-3">
-                        <input type="checkbox" class="w-5 h-5 accent-[#a3e635]" onchange="toggleAdicional(${add.id}, ${add.preco}, '${add.nome}', this.checked)">
-                        <span class="text-sm font-bold uppercase">${add.nome}</span>
-                    </div>
-                    <span class="text-[#a3e635] font-bold text-xs">+ R$ ${parseFloat(add.preco).toFixed(2)}</span>
-                </label>`).join('');
+            document.getElementById('modal-preco-base').innerText = `R$ ${parseFloat(item.preco).toFixed(2)}`;
+            
+            const listaModal = document.getElementById('lista-adicionais-modal');
+
+            if (item.categoria === 'Doce' && item.subitens) {
+                const pares = item.subitens.split(',').map(p => p.trim());
+                listaModal.innerHTML = pares.map(par => {
+                    const [nomeSabor, qtdSabor] = par.split(':');
+                    const estoque = parseInt(qtdSabor) || 0;
+                    const temEstoque = estoque > 0;
+
+                    return `
+                    <label class="flex items-center justify-between p-4 bg-[#2d3139] rounded-2xl border border-gray-700 ${!temEstoque ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[#a3e635]'}">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="sabor_doce" ${!temEstoque ? 'disabled' : ''} class="w-5 h-5 accent-[#a3e635]" onchange="selecionarSabor('${nomeSabor}')">
+                            <span class="text-sm font-bold uppercase text-white">${nomeSabor}</span>
+                        </div>
+                        <!--
+                            <span class="text-[#a3e635] font-bold text-xs">${temEstoque ? `Disp: ${estoque}` : 'ESGOTADO'}</span>
+                        --> 
+
+                    </label>`;
+                }).join('');
+            } else {
+                const adds = LANCHES.filter(l => l.categoria === 'Adicional');
+                listaModal.innerHTML = adds.map(add => `
+                    <label class="flex items-center justify-between p-4 bg-[#2d3139] rounded-2xl border border-gray-700 cursor-pointer hover:border-[#a3e635]">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" class="w-5 h-5 accent-[#a3e635]" onchange="toggleAdicional(${add.id}, ${add.preco}, '${add.nome}', this.checked)">
+                            <span class="text-sm font-bold uppercase text-white">${add.nome}</span>
+                        </div>
+                        <span class="text-[#a3e635] font-bold text-xs">+ R$ ${parseFloat(add.preco).toFixed(2)}</span>
+                    </label>`).join('');
+            }
+
             atualizarTotalModal();
             document.getElementById('modal-custom').classList.remove('hidden');
             lucide.createIcons();
@@ -460,12 +483,21 @@
             atualizarTotalModal();
         }
 
+        function selecionarSabor(nome) {
+            adicionaisSelecionados = [{ id: Math.random(), preco: 0, nome: nome }];
+            atualizarTotalModal();
+        }
+
         function atualizarTotalModal() {
             const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
             document.getElementById('modal-total-final').innerText = `R$ ${total.toFixed(2)}`;
         }
 
         function confirmarPersonalizacao() {
+            if (itemSendoEditado.categoria === 'Doce' && adicionaisSelecionados.length === 0) {
+                alert("Por favor, selecione um sabor antes de adicionar!");
+                return; 
+            }
             const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
             carrinho.push({ ...itemSendoEditado, adicionais: [...adicionaisSelecionados], totalItem: total, observacao: "" });
             fecharModal(); atualizarCarrinho(); if(!document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
@@ -477,6 +509,7 @@
             const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
             const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
             const msgCupom = document.getElementById('cupom-msg');
+            
             if (data && (!data.expira_em || new Date(data.expira_em) > new Date()) && data.total_usado < data.limite_usos) {
                 porcentagemCupom = parseFloat(data.valor);
                 nomeCupomAtivo = data.codigo;
@@ -493,14 +526,17 @@
         function atualizarCarrinho() {
             const container = document.getElementById('cart-items');
             const totalEl = document.getElementById('cart-total');
+            const subtotalStep1El = document.getElementById('subtotal-step1'); // INCLUÍDO NA VALIDAÇÃO
             const countEl = document.getElementById('cart-count');
             const btnFinalizar = document.getElementById('btn-finalizar');
 
             if (carrinho.length === 0) {
                 container.innerHTML = '<p class="text-gray-600 text-center uppercase font-bold text-[10px] mt-10">Carrinho vazio</p>';
                 btnFinalizar.disabled = true;
+                btnFinalizar.className = "w-full py-4 bg-gray-700 text-gray-500 font-black uppercase rounded-2xl transition-all";
                 totalEl.innerText = "R$ 0,00";
-                countEl.classList.add('hidden');
+                if(subtotalStep1El) subtotalStep1El.innerText = "R$ 0,00"; // Zera o Step 1
+                if(countEl) countEl.classList.add('hidden');
             } else {
                 container.innerHTML = carrinho.map((item, index) => `
                     <div class="bg-[#23272f] p-6 rounded-2xl flex flex-col gap-3 border border-gray-800">
@@ -512,7 +548,7 @@
                             </div>
                             <button onclick="removerDoCarrinho(${index})" class="text-red-500"><i data-lucide="trash-2" size="18"></i></button>
                         </div>
-                        <textarea onchange="salvarObservacao(${index}, this.value)" class="bg-[#1a1d23] p-3 rounded-xl text-xs outline-none border border-gray-700">${item.observacao || ''}</textarea>
+                        <textarea onchange="salvarObservacao(${index}, this.value)" placeholder="Observação (Ex: Tirar cebola)" class="bg-[#1a1d23] p-3 rounded-xl text-xs outline-none border border-gray-700">${item.observacao || ''}</textarea>
                     </div>`).join('');
 
                 const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
@@ -520,13 +556,51 @@
                 const totalFinal = Math.max(0, subtotal + taxaEntrega - valorDesconto);
                 
                 totalEl.innerText = `R$ ${totalFinal.toFixed(2)}`;
+                if(subtotalStep1El) subtotalStep1El.innerText = `R$ ${subtotal.toFixed(2)}`; // ATUALIZA O STEP 1!
+                
                 document.getElementById('txt-frete').innerText = `Frete: R$ ${taxaEntrega.toFixed(2)}`;
                 btnFinalizar.disabled = false;
-                btnFinalizar.className = "w-full py-4 rounded-2xl font-black uppercase bg-[#a3e635] text-[#1a1d23]";
-                countEl.classList.remove('hidden'); countEl.innerText = carrinho.length;
+                btnFinalizar.className = "w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.02] transition-all";
+                
+                if(countEl) {
+                    countEl.classList.remove('hidden'); 
+                    countEl.innerText = carrinho.length;
+                }
             }
             lucide.createIcons();
         }
+
+        // --- FUNÇÕES DE NAVEGAÇÃO DO CARRINHO (MESCLADAS E CORRIGIDAS) ---
+
+        function toggleCart() {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-overlay');
+            const avatar = document.getElementById('avatar-container');
+            
+            const isOpen = drawer.classList.toggle('open');
+            if(overlay) overlay.classList.toggle('hidden');
+            if(avatar) avatar.style.opacity = isOpen ? "0" : "1";
+
+            // Garante que toda vez que fechar/abrir, volte para a tela de itens!
+            voltarParaItens(); 
+        }
+
+        function avancarCheckout() {
+            if (carrinho.length === 0) {
+                alert("Seu carrinho está vazio! Adicione alguns lanches primeiro.");
+                return;
+            }
+            document.getElementById('carrinho-step-1').classList.add('hidden');
+            document.getElementById('carrinho-step-2').classList.remove('hidden');
+            atualizarCarrinho(); 
+        }
+
+        function voltarParaItens() {
+            document.getElementById('carrinho-step-2').classList.add('hidden');
+            document.getElementById('carrinho-step-1').classList.remove('hidden');
+        }
+
+        // -----------------------------------------------------------------
 
         async function finalizarPedido() {
             const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
@@ -539,44 +613,88 @@
                 alert("Calcule o frete antes de finalizar!"); return;
             }
 
-            if (nomeCupomAtivo) await supabaseClient.rpc('incrementar_uso_cupom', { codigo_cupom: nomeCupomAtivo });
+            const btn = document.getElementById('btn-finalizar');
+            const txtOriginal = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Finalizando...`;
+            btn.disabled = true;
 
-            let itensTexto = "";
-            ['Lanche', 'Doce', 'Bebida'].forEach(cat => {
-                const itens = carrinho.filter(i => i.categoria === cat);
-                if (itens.length > 0) {
-                    itensTexto += `\n*${cat.toUpperCase()}S:*\n`;
-                    itens.forEach(i => {
-                        itensTexto += `• ${i.nome} (R$ ${(i.totalItem || i.preco).toFixed(2)})`;
-                        if (i.adicionais?.length) itensTexto += `\n  ┗ Extras: ${i.adicionais.map(a => a.nome).join(', ')}`;
-                        if (i.observacao) itensTexto += `\n  ┗ Obs: ${i.observacao.trim()}`;
-                        itensTexto += `\n`;
-                    });
+            try {
+                if (nomeCupomAtivo) await supabaseClient.rpc('incrementar_uso_cupom', { codigo_cupom: nomeCupomAtivo });
+
+                for (const itemCarrinho of carrinho) {
+                    const itemOriginal = LANCHES.find(l => l.id === itemCarrinho.id);
+                    if (!itemOriginal) continue;
+
+                    if (itemOriginal.categoria === 'Doce' && itemOriginal.subitens) {
+                        const saborEscolhido = itemCarrinho.adicionais?.length > 0 ? itemCarrinho.adicionais[0].nome : null;
+                        if (saborEscolhido) {
+                            const pares = itemOriginal.subitens.split(',').map(p => p.trim());
+                            const novosPares = pares.map(par => {
+                                const [nomeSabor, qtdSabor] = par.split(':');
+                                if (nomeSabor.trim() === saborEscolhido) {
+                                    const novaQtd = Math.max(0, parseInt(qtdSabor) - 1);
+                                    return `${nomeSabor.trim()}:${novaQtd}`;
+                                }
+                                return par;
+                            });
+                            const novaStringSubitens = novosPares.join(', ');
+                            itemOriginal.subitens = novaStringSubitens; 
+                            await supabaseClient.from('lanches').update({ subitens: novaStringSubitens }).eq('id', itemOriginal.id);
+                        }
+                    } 
+                    else if (itemOriginal.categoria !== 'Lanche' && itemOriginal.estoque > 0) {
+                        const novoEstoque = itemOriginal.estoque - 1;
+                        itemOriginal.estoque = novoEstoque;
+                        await supabaseClient.from('lanches').update({ estoque: novoEstoque }).eq('id', itemOriginal.id);
+                    }
                 }
-            });
 
-            // Montagem da mensagem final
-            let msgWhatsApp = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;
-            msgWhatsApp += `\n*ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA' : 'MOTOBOY'}`;
-            
-            if (tipoEntrega === 'delivery') {
-                msgWhatsApp += `\n*ENDEREÇO:* ${rua}, ${num}`;
-                msgWhatsApp += `\n*BAIRRO:* ${document.getElementById('bairro_display').value}`;
-                if (document.getElementById('referencia').value) msgWhatsApp += `\n*REF:* ${document.getElementById('referencia').value}\n------------------------------\n`;
-                msgWhatsApp += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
+                let itensTexto = "";
+                ['Lanche', 'Doce', 'Bebida'].forEach(cat => {
+                    const itens = carrinho.filter(i => i.categoria === cat);
+                    if (itens.length > 0) {
+                        itensTexto += `\n*${cat.toUpperCase()}S:*\n`;
+                        itens.forEach(i => {
+                            itensTexto += `• ${i.nome} (R$ ${(i.totalItem || i.preco).toFixed(2)})`;
+                            if (i.adicionais?.length) {
+                                const label = i.categoria === 'Doce' ? 'Sabor:' : 'Extras:';
+                                itensTexto += `\n  ┗ ${label} ${i.adicionais.map(a => a.nome).join(', ')}`;
+                            }
+                            if (i.observacao) itensTexto += `\n  ┗ Obs: ${i.observacao.trim()}`;
+                            itensTexto += `\n`;
+                        });
+                    }
+                });
+
+                let msgWhatsApp = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;
+                msgWhatsApp += `\n*ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA' : 'MOTOBOY'}`;
+                
+                if (tipoEntrega === 'delivery') {
+                    msgWhatsApp += `\n*ENDEREÇO:* ${rua}, ${num}`;
+                    msgWhatsApp += `\n*BAIRRO:* ${document.getElementById('bairro_display').value}`;
+                    if (document.getElementById('referencia').value) msgWhatsApp += `\n*REF:* ${document.getElementById('referencia').value}\n------------------------------\n`;
+                    msgWhatsApp += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
+                }
+                
+                if (porcentagemCupom > 0) msgWhatsApp += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${valorDesconto.toFixed(2)})`;
+                msgWhatsApp += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
+
+                window.open(`https://wa.me/5515981033150?text=${encodeURIComponent(msgWhatsApp)}`, '_blank');
+                
+                // Esvazia o carrinho depois de enviar
+                carrinho = [];
+                atualizarCarrinho();
+                toggleCart();
+
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao finalizar o pedido. Tente novamente.");
+            } finally {
+                btn.innerHTML = txtOriginal;
+                btn.disabled = false;
             }
-            
-            if (porcentagemCupom > 0) msgWhatsApp += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${valorDesconto.toFixed(2)})`;
-            msgWhatsApp += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
-
-            window.open(`https://wa.me/5515981033150?text=${encodeURIComponent(msgWhatsApp)}`, '_blank');
         }
 
-        function toggleCart() {
-            const isOpen = document.getElementById('cart-drawer').classList.toggle('open');
-            document.getElementById('cart-overlay').classList.toggle('hidden');
-            document.getElementById('avatar-container').style.opacity = isOpen ? "0" : "1";
-        }
         function removerDoCarrinho(index) { carrinho.splice(index, 1); atualizarCarrinho(); }
         function salvarObservacao(index, texto) { carrinho[index].observacao = texto; }
     </script>
