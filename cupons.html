@@ -34,8 +34,16 @@
                 <input type="hidden" id="cupom-id" value="">
                 
                 <input type="text" id="codigo" placeholder="Ex: Crazy10" required class="input-field p-4 rounded-xl font-bold">
-                <input type="number" id="valor" placeholder="Desconto em % (Ex: 10)" step="1" min="1" max="100" required class="input-field p-4 rounded-xl font-bold">
+                <input type="number" id="valor" placeholder="Desconto em % (Ex: 10)" step="1" min="0" max="100" required class="input-field p-4 rounded-xl font-bold">
                 
+                <div class="md:col-span-2 flex items-center gap-3 p-4 bg-[#23272f] rounded-xl border border-gray-700 mt-2">
+                    <input type="checkbox" id="frete_gratis" class="w-5 h-5 accent-[#a3e635] cursor-pointer">
+                    <label for="frete_gratis" class="text-xs font-bold uppercase text-white cursor-pointer">
+                        Aplicar <span class="text-[#a3e635]">Frete Grátis</span> neste cupom?
+                    </label>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1 md:col-span-2">* Se marcado, o valor em % acima será ignorado.</p>
+
                 <div>
                     <label class="block text-[10px] font-bold text-gray-500 uppercase mb-2">Duração em Minutos (Vazio = Manter/Ilimitado)</label>
                     <input type="number" id="duracao" placeholder="Ex: 120" class="input-field w-full p-4 rounded-xl">
@@ -85,11 +93,15 @@
                 expiraEm = data.toISOString();
             }
 
+            const checkboxFrete = document.getElementById('frete_gratis');
+
             const dadosCupom = {
-                codigo, 
-                valor, 
-                limite_usos: parseInt(limite), 
-                ativo: true
+                codigo: document.getElementById('codigo').value.toUpperCase(),
+                valor: parseFloat(document.getElementById('valor').value) || 0,
+                // AQUI ESTAVA O ERRO: o ID correto é 'limite', não 'limite_usos'
+                limite_usos: parseInt(document.getElementById('limite').value) || 100, 
+                ativo: true,
+                frete_gratis: checkboxFrete ? checkboxFrete.checked : false
             };
 
             // Se for edição e não informou nova duração, não sobrescreve a data antiga
@@ -124,13 +136,15 @@
                     const agora = new Date();
                     const expirado = c.expira_em && new Date(c.expira_em) < agora;
                     const esgotado = c.total_usado >= c.limite_usos;
+
+                    const textoBadge = c.frete_gratis ? "FRETE GRÁTIS" : `${c.valor}% OFF`;
                     
                     return `
                     <div class="bg-[#1a1d23] p-6 rounded-2xl border ${expirado || esgotado ? 'border-red-900 opacity-50' : 'border-gray-800'} flex justify-between items-center shadow-lg">
                         <div>
                             <div class="flex items-center gap-2">
                                 <span class="font-black text-lg text-white">${c.codigo}</span>
-                                <span class="bg-[#a3e635]/10 text-[#a3e635] text-[10px] px-2 py-0.5 rounded-full font-bold">${c.valor}% OFF</span>
+                                <span class="bg-[#a3e635]/10 text-[#a3e635] text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">${textoBadge}</span>
                             </div>
                             <p class="text-[10px] text-gray-500 uppercase mt-1 font-bold">
                                 ${expirado ? '🔴 EXPIRADO' : (c.expira_em ? `⏰ Até: ${new Date(c.expira_em).toLocaleString()}` : '♾️ Sem limite de tempo')} | 
@@ -145,15 +159,13 @@
                                 <i data-lucide="trash-2"></i>
                             </button>
                         </div>
-                    </div>
-                `}).join('');
+                    </div>`;
+                }).join(''); // <-- Corrigido aqui! Sem a crase sobrando.
+                
                 lucide.createIcons(); // Renderiza os ícones Lucide injetados
             }
         }
 
-        /**
-         * Preenche o formulário com os dados do cupom para edição
-         */
         function prepararEdicao(id) {
             const cupom = cuponsLocais.find(c => c.id === id);
             if (!cupom) return;
@@ -161,21 +173,25 @@
             document.getElementById('cupom-id').value = cupom.id;
             document.getElementById('codigo').value = cupom.codigo;
             document.getElementById('valor').value = cupom.valor;
+            
+            // AQUI ESTAVA O ERRO: estava 'item.frete_gratis', o certo é 'cupom.frete_gratis'
+            document.getElementById('frete_gratis').checked = cupom.frete_gratis || false; 
+            
             document.getElementById('limite').value = cupom.limite_usos;
-            document.getElementById('duracao').value = ""; // Limpa para evitar re-cálculo acidental
+            document.getElementById('duracao').value = ""; 
 
             document.getElementById('titulo-form').innerText = "Editando Cupom: " + cupom.codigo;
             document.getElementById('btn-submit').innerText = "Atualizar Cupom";
             document.getElementById('btn-cancelar').classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-
         /**
          * Volta o formulário para o estado inicial de cadastro
          */
         function resetarFormulario() {
             document.getElementById('form-cupom').reset();
             document.getElementById('cupom-id').value = "";
+            document.getElementById('frete_gratis').checked = false;
             document.getElementById('titulo-form').innerText = "Gerar Novo Cupom";
             document.getElementById('btn-submit').innerText = "Criar Cupom Ativo";
             document.getElementById('btn-cancelar').classList.add('hidden');

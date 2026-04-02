@@ -239,6 +239,7 @@
         let taxaEntrega = 0;
         let bairroNome = ""; 
         let tipoEntrega = 'retirada';
+        let isFreteGratis = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
             try {
@@ -350,6 +351,8 @@
             }
             atualizarCarrinho();
         }
+
+        
 
         function renderizarCardapio() {
             const container = document.getElementById('cardapio');
@@ -503,28 +506,40 @@
 
         function fecharModal() { document.getElementById('modal-custom').classList.add('hidden'); }
 
-        async function aplicarCupom() {
-            const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
-            const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
-            const msgCupom = document.getElementById('cupom-msg');
+    async function aplicarCupom() {
+        const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
+        const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
+        const msgCupom = document.getElementById('cupom-msg');
+        
+        if (data && (!data.expira_em || new Date(data.expira_em) > new Date()) && data.total_usado < data.limite_usos) {
+            nomeCupomAtivo = data.codigo;
             
-            if (data && (!data.expira_em || new Date(data.expira_em) > new Date()) && data.total_usado < data.limite_usos) {
-                porcentagemCupom = parseFloat(data.valor);
-                nomeCupomAtivo = data.codigo;
-                msgCupom.innerText = `CUPOM OK: ${porcentagemCupom}% OFF`;
-                msgCupom.className = "text-[10px] mt-1 text-[#a3e635] font-bold block";
+            // Verifica se é cupom de frete grátis ou porcentagem
+            if (data.frete_gratis === true) {
+                isFreteGratis = true;
+                porcentagemCupom = 0; // Zera a porcentagem para não dar 2 descontos
+                msgCupom.innerText = `CUPOM OK: FRETE GRÁTIS!`;
             } else {
-                porcentagemCupom = 0; nomeCupomAtivo = "";
-                msgCupom.innerText = "CUPOM INVÁLIDO";
-                msgCupom.className = "text-[10px] mt-1 text-red-500 font-bold block";
+                isFreteGratis = false;
+                porcentagemCupom = parseFloat(data.valor);
+                msgCupom.innerText = `CUPOM OK: ${porcentagemCupom}% OFF`;
             }
-            atualizarCarrinho();
+            
+            msgCupom.className = "text-[10px] mt-1 text-[#a3e635] font-bold block";
+        } else {
+            porcentagemCupom = 0; 
+            nomeCupomAtivo = "";
+            isFreteGratis = false; // Reseta se der erro
+            msgCupom.innerText = "CUPOM INVÁLIDO";
+            msgCupom.className = "text-[10px] mt-1 text-red-500 font-bold block";
         }
+        atualizarCarrinho();
+    }
 
         function atualizarCarrinho() {
             const container = document.getElementById('cart-items');
             const totalEl = document.getElementById('cart-total');
-            const subtotalStep1El = document.getElementById('subtotal-step1'); // INCLUÍDO NA VALIDAÇÃO
+            const subtotalStep1El = document.getElementById('subtotal-step1');
             const countEl = document.getElementById('cart-count');
             const btnFinalizar = document.getElementById('btn-finalizar');
 
@@ -533,7 +548,7 @@
                 btnFinalizar.disabled = true;
                 btnFinalizar.className = "w-full py-4 bg-gray-700 text-gray-500 font-black uppercase rounded-2xl transition-all";
                 totalEl.innerText = "R$ 0,00";
-                if(subtotalStep1El) subtotalStep1El.innerText = "R$ 0,00"; // Zera o Step 1
+                if(subtotalStep1El) subtotalStep1El.innerText = "R$ 0,00";
                 if(countEl) countEl.classList.add('hidden');
             } else {
                 container.innerHTML = carrinho.map((item, index) => `
@@ -549,14 +564,25 @@
                         <textarea onchange="salvarObservacao(${index}, this.value)" placeholder="Observação (Ex: Tirar cebola)" class="bg-[#1a1d23] p-3 rounded-xl text-xs outline-none border border-gray-700">${item.observacao || ''}</textarea>
                     </div>`).join('');
 
+                // --- MATEMÁTICA CORRIGIDA AQUI ---
+                const freteFinal = isFreteGratis ? 0 : taxaEntrega; // Se tiver cupom, vira 0
                 const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
                 const valorDesconto = (subtotal * porcentagemCupom) / 100;
-                const totalFinal = Math.max(0, subtotal + taxaEntrega - valorDesconto);
+                
+                // A mágica acontece nesta linha (usando freteFinal no lugar de taxaEntrega)
+                const totalFinal = Math.max(0, subtotal + freteFinal - valorDesconto);
+                // ---------------------------------
                 
                 totalEl.innerText = `R$ ${totalFinal.toFixed(2)}`;
-                if(subtotalStep1El) subtotalStep1El.innerText = `R$ ${subtotal.toFixed(2)}`; // ATUALIZA O STEP 1!
+                if(subtotalStep1El) subtotalStep1El.innerText = `R$ ${subtotal.toFixed(2)}`;
                 
-                document.getElementById('txt-frete').innerText = `Frete: R$ ${taxaEntrega.toFixed(2)}`;
+                // Efeito visual no texto (Risca o valor e escreve GRÁTIS de verde)
+                if (isFreteGratis && taxaEntrega > 0) {
+                    document.getElementById('txt-frete').innerHTML = `Frete: <span class="line-through text-red-500">R$ ${taxaEntrega.toFixed(2)}</span> <span class="text-[#a3e635]">GRÁTIS</span>`;
+                } else {
+                    document.getElementById('txt-frete').innerText = `Frete: R$ ${taxaEntrega.toFixed(2)}`;
+                }
+
                 btnFinalizar.disabled = false;
                 btnFinalizar.className = "w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.02] transition-all";
                 
@@ -601,11 +627,13 @@
         // -----------------------------------------------------------------
 
         async function finalizarPedido() {
+            const freteFinal = isFreteGratis ? 0 : taxaEntrega;
             const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
             const valorDesconto = (subtotal * porcentagemCupom) / 100;
-            const totalFinal = Math.max(0, subtotal + taxaEntrega - valorDesconto);
+            const totalFinal = Math.max(0, subtotal + freteFinal - valorDesconto);
             const rua = document.getElementById('rua').value;
             const num = document.getElementById('numero').value;
+            
             
             if (tipoEntrega === 'delivery' && (!rua || !num || taxaEntrega === 0)) {
                 alert("Calcule o frete antes de finalizar!"); return;
@@ -671,7 +699,7 @@
                     msgWhatsApp += `\n*ENDEREÇO:* ${rua}, ${num}`;
                     msgWhatsApp += `\n*BAIRRO:* ${document.getElementById('bairro_display').value}`;
                     if (document.getElementById('referencia').value) msgWhatsApp += `\n*REF:* ${document.getElementById('referencia').value}\n------------------------------\n`;
-                    msgWhatsApp += `\n*TAXA:* R$ ${taxaEntrega.toFixed(2)}`;
+                    msgWhatsApp += `\n*TAXA:* ${isFreteGratis ? 'GRÁTIS (Cupom)' : `R$ ${taxaEntrega.toFixed(2)}`}`;
                 }
                 
                 if (porcentagemCupom > 0) msgWhatsApp += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${valorDesconto.toFixed(2)})`;
