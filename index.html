@@ -705,7 +705,8 @@
                 if (porcentagemCupom > 0) msgWhatsApp += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${valorDesconto.toFixed(2)})`;
                 msgWhatsApp += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
 
-                window.open(`https://wa.me/5515981033150?text=${encodeURIComponent(msgWhatsApp)}`, '_blank');
+                const linkWhatsApp = `https://wa.me/5515981033150?text=${encodeURIComponent(msgWhatsApp)}`;
+                window.location.href = linkWhatsApp;
                 
                 // Esvazia o carrinho depois de enviar
                 carrinho = [];
