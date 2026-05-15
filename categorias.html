@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrazyDog - Gestão de Categorias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --bg-dark: #23272f; --primary-orange: #f48c2e; --primary-green: #a3e635; }
+        body { background-color: var(--bg-dark); color: white; }
+        .sortable-ghost { opacity: 0.4; background-color: #f48c2e20 !important; border: 1px dashed #f48c2e !important; }
+        .lista-filhas:empty { min-height: 40px; border-style: dashed; border-color: #374151; border-radius: 0.5rem; background-color: rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="text-2xl font-black uppercase italic text-[#f48c2e] flex items-center gap-3">
+                <i data-lucide="layers"></i> Categorias
+            </h1>
+            <a href="admin.html" class="text-xs bg-gray-700 px-4 py-2 rounded-lg hover:bg-gray-600 transition-all uppercase font-bold">Voltar</a>
+        </header>
+
+        <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-6 shadow-2xl">
+            <h2 id="titulo-form-pai" class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Nova Categoria Principal</h2>
+            <form id="form-pai" class="flex flex-col md:flex-row gap-4">
+                <input type="hidden" id="pai-id" value="">
+                
+                <input type="text" id="nome-pai" placeholder="Nome (Ex: Lanches)" required 
+                    class="flex-1 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#a3e635] text-white">
+                
+                <button type="submit" id="btn-submit-pai" class="bg-[#a3e635] text-[#1a1d23] px-8 py-4 font-black uppercase rounded-xl hover:scale-105 transition-all whitespace-nowrap">
+                    Salvar Principal
+                </button>
+                <button type="button" id="btn-cancelar-pai" onclick="resetarPai()" class="hidden bg-gray-600 text-white px-8 py-4 font-black uppercase rounded-xl hover:bg-gray-500 transition-all whitespace-nowrap">
+                    Cancelar
+                </button>
+            </form>
+        </div>
+        
+        <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-10 shadow-2xl">
+            <h2 id="titulo-form-filha" class="text-[#f48c2e] font-bold uppercase text-sm mb-6 italic">Nova Subcategoria (Filha)</h2>
+            <form id="form-filha" class="flex flex-col md:flex-row gap-4">
+                <input type="hidden" id="filha-id" value="">
+                
+                <div class="flex-1 flex flex-col md:flex-row gap-4">
+                    <select id="parent-filha" required class="w-full md:w-1/3 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#f48c2e] text-white cursor-pointer">
+                        <option value="">Selecione o Pai...</option>
+                    </select>
+
+                    <input type="text" id="nome-filha" placeholder="Nome (Ex: Smash Burger)" required 
+                        class="w-full md:w-2/3 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#f48c2e] text-white">
+                </div>
+                
+                <button type="submit" id="btn-submit-filha" class="bg-[#f48c2e] text-white px-8 py-4 font-black uppercase rounded-xl hover:scale-105 transition-all whitespace-nowrap">
+                    Salvar Filha
+                </button>
+                <button type="button" id="btn-cancelar-filha" onclick="resetarFilha()" class="hidden bg-gray-600 text-white px-8 py-4 font-black uppercase rounded-xl hover:bg-gray-500 transition-all whitespace-nowrap">
+                    Cancelar
+                </button>
+            </form>
+        </div>
+
+        <div class="mb-4 flex items-center gap-2 px-2 bg-[#2d3139] p-3 rounded-xl border border-gray-800 w-fit">
+            <i data-lucide="info" class="w-4 h-4 text-[#a3e635]"></i>
+            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Arraste para reordenar. Você pode mover uma subcategoria para outro pai!</p>
+        </div>
+        
+        <div id="lista-categorias" class="flex flex-col gap-4 mb-20">
+            <p class="text-gray-500 text-center text-sm font-bold uppercase py-4">Carregando categorias...</p>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let categoriasLocais = [];
+        window.sortablePai = null;
+        window.sortableFilhas = [];
+
+        async function carregarCategorias() {
+            const { data, error } = await supabaseClient.from('categorias')
+                .select('*')
+                .order('ordem', { ascending: true })
+                .order('nome', { ascending: true });
+            
+            if (error) return alert("Erro ao carregar: " + error.message);
+
+            categoriasLocais = data;
+            renderizarTela(data);
+        }
+
+        function renderizarTela(data) {
+            const container = document.getElementById('lista-categorias');
+            const selectParent = document.getElementById('parent-filha');
+            
+            // Separa quem é pai e quem é filho
+            const principais = data.filter(c => !c.parent_id);
+            const filhas = data.filter(c => c.parent_id);
+
+            // Atualiza o Select do Formulário 2 (Filhas)
+            selectParent.innerHTML = '<option value="">Selecione o Pai...</option>' + 
+                principais.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+
+            if (data.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center uppercase font-bold text-xs mt-4">Nenhuma categoria cadastrada</p>';
+                return;
+            }
+
+            // Renderiza a Lista Hierárquica
+            container.innerHTML = principais.map(pai => {
+                const filhasDestePai = filhas.filter(f => f.parent_id === pai.id);
+                
+                return `
+                <div data-id="${pai.id}" class="bg-[#1a1d23] p-4 rounded-2xl border border-gray-700 shadow-lg flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="cursor-grab active:cursor-grabbing text-gray-500 hover:text-white handle-pai transition-colors">
+                                <i data-lucide="grip-vertical"></i>
+                            </div>
+                            <span class="font-black uppercase tracking-widest text-[#a3e635] text-lg">${pai.nome}</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="prepararEdicao(${pai.id}, '${pai.nome}', null)" class="text-blue-400 hover:bg-blue-500/10 p-2 rounded-lg"><i data-lucide="pencil" class="w-5 h-5"></i></button>
+                            <button onclick="deletarCategoria(${pai.id}, true)" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="lista-filhas flex flex-col gap-2 ml-8 pl-4 border-l-2 border-gray-800 min-h-[40px] pb-2 pt-2" data-parent="${pai.id}">
+                        ${filhasDestePai.map(filha => `
+                            <div data-id="${filha.id}" class="bg-[#2d3139] p-3 rounded-xl border border-gray-700 flex justify-between items-center group">
+                                <div class="flex items-center gap-3">
+                                    <div class="cursor-grab active:cursor-grabbing text-gray-500 hover:text-white handle-filha transition-colors">
+                                        <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+                                    </div>
+                                    <span class="font-bold uppercase tracking-wider text-gray-300 text-sm">${filha.nome}</span>
+                                </div>
+                                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onclick="prepararEdicao(${filha.id}, '${filha.nome}', ${pai.id})" class="text-blue-400 hover:bg-blue-500/10 p-1.5 rounded-lg"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                                    <button onclick="deletarCategoria(${filha.id}, false)" class="text-red-500 hover:bg-red-500/10 p-1.5 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+            ativarDragAndDrop();
+        }
+
+        function ativarDragAndDrop() {
+            const containerPai = document.getElementById('lista-categorias');
+            
+            if(window.sortablePai) window.sortablePai.destroy();
+            if(window.sortableFilhas) window.sortableFilhas.forEach(s => s.destroy());
+            window.sortableFilhas = [];
+
+            // Permite arrastar os Pais
+            window.sortablePai = new Sortable(containerPai, {
+                handle: '.handle-pai',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: salvarNovaOrdemNoBanco
+            });
+
+            // Permite arrastar as filhas
+            const containersFilhas = document.querySelectorAll('.lista-filhas');
+            containersFilhas.forEach(cf => {
+                const s = new Sortable(cf, {
+                    group: 'filhas', 
+                    handle: '.handle-filha',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onEnd: salvarNovaOrdemNoBanco
+                });
+                window.sortableFilhas.push(s);
+            });
+        }
+
+        async function salvarNovaOrdemNoBanco() {
+            const atualizacoes = [];
+            const paisNaTela = document.querySelectorAll('#lista-categorias > div[data-id]');
+            
+            paisNaTela.forEach((paiEl, indexPai) => {
+                const paiId = paiEl.getAttribute('data-id');
+                atualizacoes.push(supabaseClient.from('categorias').update({ ordem: indexPai }).eq('id', paiId));
+                
+                const filhas = paiEl.querySelectorAll('.lista-filhas > div[data-id]');
+                filhas.forEach((filhaEl, indexFilha) => {
+                    const filhaId = filhaEl.getAttribute('data-id');
+                    atualizacoes.push(supabaseClient.from('categorias').update({ ordem: indexFilha, parent_id: paiId }).eq('id', filhaId));
+                });
+            });
+
+            await Promise.all(atualizacoes);
+        }
+
+        // SALVAR CATEGORIA PAI
+        document.getElementById('form-pai').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('pai-id').value;
+            const nome = document.getElementById('nome-pai').value.trim();
+            
+            let requisicao;
+            if (id) {
+                requisicao = await supabaseClient.from('categorias').update({ nome, parent_id: null }).eq('id', id);
+            } else {
+                const novaOrdem = categoriasLocais.length; 
+                requisicao = await supabaseClient.from('categorias').insert([{ nome, ordem: novaOrdem, parent_id: null }]);
+            }
+
+            if (requisicao.error) alert("Erro: " + requisicao.error.message);
+            else { resetarPai(); carregarCategorias(); }
+        });
+
+        // SALVAR CATEGORIA FILHA
+        document.getElementById('form-filha').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('filha-id').value;
+            const nome = document.getElementById('nome-filha').value.trim();
+            const parent_id = parseInt(document.getElementById('parent-filha').value);
+            
+            let requisicao;
+            if (id) {
+                requisicao = await supabaseClient.from('categorias').update({ nome, parent_id }).eq('id', id);
+            } else {
+                const novaOrdem = categoriasLocais.length; 
+                requisicao = await supabaseClient.from('categorias').insert([{ nome, ordem: novaOrdem, parent_id }]);
+            }
+
+            if (requisicao.error) alert("Erro: " + requisicao.error.message);
+            else { resetarFilha(); carregarCategorias(); }
+        });
+
+        // PREPARAR EDIÇÃO (Decide para qual formulário mandar)
+        function prepararEdicao(id, nome, parent_id) {
+            if (parent_id === null) {
+                // Editando um Pai
+                document.getElementById('pai-id').value = id;
+                document.getElementById('nome-pai').value = nome;
+                document.getElementById('titulo-form-pai').innerText = "Editando Principal";
+                document.getElementById('btn-submit-pai').innerText = "Atualizar Principal";
+                document.getElementById('btn-cancelar-pai').classList.remove('hidden');
+                document.getElementById('btn-submit-pai').classList.replace('bg-[#a3e635]', 'bg-blue-500');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            } else {
+                // Editando uma Filha
+                document.getElementById('filha-id').value = id;
+                document.getElementById('nome-filha').value = nome;
+                document.getElementById('parent-filha').value = parent_id; 
+                document.getElementById('titulo-form-filha').innerText = "Editando Subcategoria";
+                document.getElementById('btn-submit-filha').innerText = "Atualizar Filha";
+                document.getElementById('btn-cancelar-filha').classList.remove('hidden');
+                document.getElementById('btn-submit-filha').classList.replace('bg-[#f48c2e]', 'bg-blue-500');
+                window.scrollTo({ top: document.getElementById('form-filha').offsetTop - 50, behavior: 'smooth' });
+            }
+        }
+
+        function resetarPai() {
+            document.getElementById('form-pai').reset();
+            document.getElementById('pai-id').value = "";
+            document.getElementById('titulo-form-pai').innerText = "Nova Categoria Principal";
+            document.getElementById('btn-submit-pai').innerText = "Salvar Principal";
+            document.getElementById('btn-cancelar-pai').classList.add('hidden');
+            document.getElementById('btn-submit-pai').classList.replace('bg-blue-500', 'bg-[#a3e635]');
+        }
+
+        function resetarFilha() {
+            document.getElementById('form-filha').reset();
+            document.getElementById('filha-id').value = "";
+            document.getElementById('titulo-form-filha').innerText = "Nova Subcategoria (Filha)";
+            document.getElementById('btn-submit-filha').innerText = "Salvar Filha";
+            document.getElementById('btn-cancelar-filha').classList.add('hidden');
+            document.getElementById('btn-submit-filha').classList.replace('bg-blue-500', 'bg-[#f48c2e]');
+        }
+
+        async function deletarCategoria(id, isPai) {
+            const msg = isPai 
+                ? "ATENÇÃO: Se você deletar esta categoria principal, TODAS as subcategorias dentro dela serão deletadas junto. Tem certeza?" 
+                : "Deseja remover esta subcategoria?";
+
+            if(confirm(msg)) {
+                const { error } = await supabaseClient.from('categorias').delete().eq('id', id);
+                if (error) alert("Erro ao deletar: " + error.message);
+                else carregarCategorias();
+            }
+        }
+
+        carregarCategorias();
+    </script>
+</body>
+</html>

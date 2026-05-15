@@ -84,15 +84,646 @@
         </div>
     </header>
 
-    <div class="relative min-h-[400px] bg-[#1a1d23] flex items-center justify-center overflow-hidden border-b-4 border-[#f48c2e] relative z-0">
-        
-        <div class="absolute inset-0 z-50 pointer-events-none flex items-center justify-center">
-            <div class="absolute w-[150%] h-16 bg-[#ef4444] rotate-[-25deg] shadow-2xl flex items-center justify-center gap-6 border-y-4 border-white">
-                <span class="text-white font-black uppercase italic text-2xl tracking-widest">CRAZY DOG  - EM MANUTENÇÃO</span>
-            </div>
+    <div class="relative min-h-[400px] bg-[#1a1d23] flex items-center justify-center overflow-hidden border-b-4 border-[#f48c2e]">
+        <div class="absolute inset-0 opacity-40 bg-cover bg-center" style="background-image: url('banner.png'); filter: blur(2px);"></div>
+        <div class="relative z-10 flex flex-col items-center p-6 text-center">
+            <img src="logo-sem-fundo.png" alt="CrazyDog Logo" class="w-60 h-60 md:w-[600px] md:h-[200px] object-contain animate-logo">
+            <span class="mt-4 px-9 py-2 bg-[#a3e635] text-[#1a1d23] text-xs md:text-sm font-black uppercase italic rounded-full shadow-[0_0_20px_rgba(163,230,53,0.6)] z-20">
+                O melhor dog de Itapetininga
+            </span>
         </div>
-        <div class="absolute inset-0 opacity-20 bg-cover bg-center" style="background-image: url('banner.png'); filter: blur(5px);"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-[#23272f] via-transparent to-transparent z-0"></div>
     </div>
 
+    <main class="max-w-6xl mx-auto p-6 pb-24 flex-1">
+        <div class="flex items-center gap-3 mb-8">
+            <h3 class="text-2xl font-black uppercase italic tracking-tighter text-[#a3e635] border-b-4 border-[#f48c2e]">Nosso cardápio</h3>
+        </div>
+        <div id="cardapio" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </main>
+
+    <footer class="relative z-20 mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-gray-400 text-xs font-medium">&copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <div id="cart-overlay" class="fixed inset-0 bg-black/80 z-20 hidden backdrop-blur-sm" onclick="toggleCart()"></div>
+    
+    <div id="cart-drawer" class="cart-drawer fixed right-0 top-0 h-full w-full max-w-lg bg-[#1a1d23] shadow-2xl z-30 flex flex-col">
+    
+        <div id="carrinho-step-1" class="flex flex-col h-full">
+            <div class="p-6 flex justify-between items-center border-b border-gray-800">
+                <h2 class="font-black italic uppercase text-[#f48c2e]">Seu Pedido</h2>
+                <button onclick="toggleCart()" class="text-gray-500 hover:text-white transition-colors"><i data-lucide="x"></i></button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 space-y-4"></div>
+
+            <div class="p-6 bg-[#16191e] border-t border-gray-800">
+                <div class="flex justify-between items-center mb-4">
+                    <span class="text-gray-500 font-bold uppercase text-xs">Subtotal</span>
+                    <span id="subtotal-step1" class="text-white font-black text-xl">R$ 0,00</span> 
+                </div>
+                <button onclick="avancarCheckout()" class="w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.02] transition-all flex justify-center items-center gap-2">
+                    Continuar <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="carrinho-step-2" class="flex flex-col h-full hidden">
+            <div class="p-6 flex justify-between items-center border-b border-gray-800">
+                <div class="flex items-center gap-4">
+                    <button onclick="voltarParaItens()" class="text-gray-500 hover:text-white transition-colors bg-gray-800 p-2 rounded-lg"><i data-lucide="arrow-left" class="w-4 h-4"></i></button>
+                    <h2 class="font-black italic uppercase text-[#f48c2e]">Entrega</h2>
+                </div>
+                <button onclick="toggleCart()" class="text-gray-500 hover:text-white transition-colors"><i data-lucide="x"></i></button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-6 bg-[#1a1d23]">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1 tracking-widest">Cupom de Desconto</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="cupom-input" placeholder="CÓDIGO" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs uppercase font-black outline-none focus:border-[#a3e635]">
+                        <button onclick="aplicarCupom()" class="bg-[#a3e635] text-[#1a1d23] px-4 rounded-xl font-black text-xs uppercase hover:scale-105 transition-all">Ok</button>
+                    </div>
+                    <p id="cupom-msg" class="text-[10px] mt-1 font-bold hidden"></p>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block text-[10px] font-black uppercase text-gray-500 tracking-widest text-center border-b border-gray-800 pb-2">Forma de Entrega</label>
+                    <div class="flex gap-2 p-1 bg-[#23272f] rounded-xl">
+                        <button onclick="setTipoEntrega('retirada')" id="btn-retirada" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23] transition-all">Retirada</button>
+                        <button onclick="setTipoEntrega('delivery')" id="btn-delivery" class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400 transition-all">Motoboy</button>
+                    </div>
+
+                    <div id="secao-endereco" class="hidden space-y-2 mt-4">
+                        <div class="flex gap-2">
+                            <input type="text" id="cep" placeholder="CEP" class="w-1/3 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#a3e635]" onblur="buscarEnderecoViaCEP()">
+                            <input type="text" id="rua" placeholder="Rua" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none text-gray-400" readonly>
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <input type="text" id="numero" placeholder="Nº" class="w-1/4 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#f48c2e]">
+                            <input type="text" id="bairro_display" placeholder="Bairro" class="flex-1 bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none text-gray-400" readonly>
+                        </div>
+
+                        <input type="text" id="referencia" placeholder="Ponto de Referência" class="w-full bg-[#23272f] border border-gray-700 p-3 rounded-xl text-xs outline-none focus:border-[#a3e635]">
+
+                        <button type="button" id="btn-calc-frete" onclick="atualizarFreteGoogle()" class="w-full py-3 mt-2 bg-gray-800 text-[#a3e635] text-[10px] font-black uppercase rounded-xl border border-gray-700 hover:bg-gray-700 transition-all">
+                            Calcular Frete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-[#16191e] border-t border-gray-800">
+                <div class="flex justify-between items-end mb-4">
+                    <span class="text-gray-500 font-bold uppercase text-xs mb-1">Total a pagar:</span>
+                    <div class="text-right">
+                        <span id="txt-frete" class="text-[10px] text-gray-400 block uppercase font-bold mb-1">Frete: R$ 0,00</span>
+                        <span id="cart-total" class="text-3xl font-black text-[#a3e635]">R$ 0,00</span>
+                    </div>
+                </div>
+
+                <button id="btn-finalizar" onclick="finalizarPedido()" disabled class="w-full py-4 bg-gray-700 text-gray-500 font-black uppercase rounded-2xl transition-all">
+                    Finalizar no WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-custom" class="fixed inset-0 bg-black/90 z-50 hidden backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-[#1a1d23] w-full max-w-lg rounded-[2.5rem] border border-gray-800 flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+            <div class="p-8 border-b border-gray-800 flex justify-between items-center bg-[#23272f]">
+                <div>
+                    <h2 id="modal-titulo" class="text-2xl font-black uppercase italic text-[#f48c2e]">Personalizar</h2>
+                    <p id="modal-preco-base" class="text-[#a3e635] font-bold text-sm"></p>
+                </div>
+                <button onclick="fecharModal()" class="text-gray-500 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <div id="lista-adicionais-modal" class="flex-1 overflow-y-auto p-8 space-y-3"></div>
+            <div class="p-8 bg-[#23272f] border-t border-gray-800">
+                <button onclick="confirmarPersonalizacao()" class="w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl">
+                    Adicionar - <span id="modal-total-final">R$ 0,00</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="avatar-container" class="fixed bottom-6 left-6 z-10 flex items-center transition-opacity duration-300">
+        <div class="absolute left-16 md:left-32 bg-white text-[#1a1d23] px-3 py-1.5 md:px-4 md:py-2 rounded-2xl rounded-bl-none shadow-xl border-2 border-[#a3e635] animate-msg w-max block">
+            <p class="text-[9px] md:text-[11px] font-black uppercase tracking-tighter text-center">Precisa de ajuda?</p>
+        </div>
+        <a href="https://wa.me/5515981033150?text=Olá! Preciso de ajuda com o cardápio." target="_blank" class="w-16 h-16 md:w-32 md:h-32 bg-[#a3e635] rounded-full p-1 shadow-2xl hover:scale-110 transition-transform active:scale-95 flex items-center justify-center overflow-hidden border-4 border-white">
+            <img src="avatar-sem-fundo.png" alt="Assistente" class="w-full h-full object-contain">
+        </a>
+    </div>
+
+    <script>
+        // Puxando API para calculo do frete
+        const GOOGLE_MAPS_API_KEY = 'AIzaSyC2N-XgovNRshXkA9XKgk-O0jwevjYhq5w';
+        const ENDERECO_ORIGEM = 'Rua Adão Mariano Gomes, 370 - Jardim Brasil, Itapetininga - SP';
+
+        // Configurações do Supabase
+        const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        let LANCHES = [];
+        let carrinho = [];
+        let porcentagemCupom = 0;
+        let nomeCupomAtivo = "";
+        let itemSendoEditado = null;
+        let adicionaisSelecionados = [];
+        let taxaEntrega = 0;
+        let bairroNome = ""; 
+        let tipoEntrega = 'retirada';
+        let isFreteGratis = false;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await buscarLanchesDoBanco();
+                lucide.createIcons();
+            } catch (error) {
+                console.error("Erro no carregamento:", error);
+            }
+        });
+
+        async function buscarLanchesDoBanco() {
+            const { data, error } = await supabaseClient.from('lanches').select('*').order('ordem', { ascending: true });
+            if (!error) { LANCHES = data; renderizarCardapio(); }
+        }
+
+        // --- LÓGICA DE FRETE (VIA CEP + GOOGLE MAPS) ---
+
+        async function buscarEnderecoViaCEP() {
+            const cep = document.getElementById('cep').value.replace(/\D/g, '');
+            if (cep.length !== 8) return;
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const data = await response.json();
+            if (!data.erro) {
+                document.getElementById('rua').value = data.logradouro;
+                document.getElementById('bairro_display').value = data.bairro;
+                document.getElementById('numero').focus();
+            }
+        }
+
+        async function calcularDistanciaFrete(enderecoDestino) {
+            return new Promise((resolve) => {
+                const service = new google.maps.DistanceMatrixService();
+                service.getDistanceMatrix({
+                    origins: [ENDERECO_ORIGEM],
+                    destinations: [enderecoDestino],
+                    travelMode: google.maps.TravelMode.DRIVING,
+                }, (response, status) => {
+                    if (status === "OK") {
+                        const element = response.rows[0].elements[0];
+                        if (element.status === "OK") {
+                            const distanciaKm = element.distance.value / 1000;
+                            let valorFinal = 0;
+
+                            if (distanciaKm <= 1) valorFinal = Math.max(distanciaKm * 3.65, 5);
+                            else if (distanciaKm <= 2) valorFinal = Math.max(distanciaKm * 3.60, 5);
+                            else if (distanciaKm <= 3) valorFinal = Math.max(distanciaKm * 3, 5);
+                            else if (distanciaKm <= 4) valorFinal = 6 + (distanciaKm * 0.30);
+                            else if (distanciaKm <= 5) valorFinal = 5 + (distanciaKm * 0.30);
+                            else if (distanciaKm <= 6) valorFinal = 6 + (distanciaKm * 0.35);
+                            else if (distanciaKm <= 7) valorFinal = 7 + (distanciaKm * 0.35);
+                            else if (distanciaKm <= 8) valorFinal = 9 + (distanciaKm * 0.45); 
+                            else valorFinal = 10 + (distanciaKm * 0.40);
+
+                            const valorArredondado = Math.ceil(valorFinal);
+
+                            resolve({ sucesso: true, valor: valorArredondado, km: distanciaKm.toFixed(1) });
+                        } else {
+                            resolve({ sucesso: false, erro: "Endereço não localizado." });
+                        }
+                    } else {
+                        resolve({ sucesso: false, erro: "Erro no Google: " + status });
+                    }
+                });
+            });
+        }
+
+        async function atualizarFreteGoogle() {
+            const rua = document.getElementById('rua').value;
+            const num = document.getElementById('numero').value;
+            const bairro = document.getElementById('bairro_display').value;
+            
+            if (!rua || !num) { alert("Preencha CEP e Número!"); return; }
+
+            const btn = document.getElementById('btn-calc-frete');
+            btn.innerText = "CALCULANDO...";
+            btn.disabled = true;
+
+            const endereco = `${rua}, ${num} - ${bairro}, Itapetininga, SP`;
+            const res = await calcularDistanciaFrete(endereco);
+
+            if (res.sucesso) {
+                taxaEntrega = res.valor;
+                bairroNome = `${bairro} (${res.km}km)`;
+                atualizarCarrinho();
+                btn.innerText = "FRETE CALCULADO!";
+                btn.classList.replace('bg-gray-800', 'bg-green-900');
+            } else {
+                alert(res.erro);
+                btn.innerText = "TENTAR NOVAMENTE";
+                btn.classList.replace('bg-green-900', 'bg-red-900');
+            }
+            btn.disabled = false;
+        }
+
+        function setTipoEntrega(tipo) {
+            tipoEntrega = tipo;
+            const secao = document.getElementById('secao-endereco');
+            const btnD = document.getElementById('btn-delivery');
+            const btnR = document.getElementById('btn-retirada');
+            if (tipo === 'retirada') {
+                secao.classList.add('hidden');
+                taxaEntrega = 0;
+                btnR.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23]";
+                btnD.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400";
+            } else {
+                secao.classList.remove('hidden');
+                btnD.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-[#a3e635] text-[#1a1d23]";
+                btnR.className = "flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-gray-400";
+            }
+            atualizarCarrinho();
+        }
+
+        
+
+        function renderizarCardapio() {
+            const container = document.getElementById('cardapio');
+            if (!container) return;
+
+            const cats = ['Lanche', 'Doce', 'Bebida'];
+            const nomesExibicao = { 'Lanche': 'Lanches', 'Doce': 'Doces', 'Bebida': 'Bebidas' };
+            let htmlFinal = ''; 
+
+            cats.forEach(cat => {
+                const itens = LANCHES.filter(i => i.categoria === cat);
+                
+                if (itens.length > 0) {
+                    htmlFinal += `
+                        <div class="col-span-full mt-10 mb-4 border-l-4 border-[#f48c2e] pl-4">
+                            <h3 class="text-2xl font-black italic text-[#a3e635]">${nomesExibicao[cat]}</h3>
+                        </div>`;
+
+                    itens.forEach(item => {
+                        let estoqueCalculado = item.estoque || 0;
+                        
+                        if (item.categoria === 'Doce' && item.subitens && item.subitens.trim() !== '') {
+                            estoqueCalculado = item.subitens.split(',').reduce((total, par) => {
+                                const partes = par.split(':');
+                                return total + (parseInt(partes[1]) || 0);
+                            }, 0);
+                        }
+
+                        const temEstoque = item.categoria === 'Lanche' || estoqueCalculado > 0;
+                        const avisoUltimaUnidade = item.categoria !== 'Lanche' && estoqueCalculado === 1;
+                    
+                        let ribbonHtml = '';
+                        if (item.tag === 'lancamento') ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-lancamento">Lançamento</div></div>`;
+                        else if (item.tag === 'destaque') ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-destaque">Mais Vendido</div></div>`;
+                        else if (item.tag == "promocao") ribbonHtml = `<div class="ribbon-wrapper"><div class="ribbon ribbon-promocao">Promoção</div></div>`;
+
+                        htmlFinal += `
+                        <div class="orange-border-card bg-[#2d3139] overflow-hidden flex flex-col shadow-lg relative ${!temEstoque ? 'opacity-50 grayscale' : ''}">
+                            ${ribbonHtml}
+                            ${!temEstoque ? `<div class="absolute inset-0 z-10 flex items-center justify-center bg-black/40"><span class="bg-red-600 text-white text-[10px] font-black uppercase px-4 py-1 rounded-full italic shadow-xl">Esgotado</span></div>` : ''}
+                            <!--
+                                ${avisoUltimaUnidade ? `<div class="absolute top-4 right-4 z-10"><span class="bg-[#f48c2e] text-[#1a1d23] text-[9px] font-black uppercase px-2 py-1 rounded-lg animate-pulse">⚠️ Última</span></div>` : ''}
+                            -->
+
+                            <div class="h-48 overflow-hidden relative">
+                                <img src="${item.imagem}" class="w-full h-full object-cover">
+                            </div>
+
+                            <div class="p-6 flex-1 flex flex-col">
+                                <h4 class="font-black uppercase italic text-white">${item.nome}</h4>
+                                <p class="text-gray-400 text-xs mt-2 flex-1 leading-tight">${item.descricao || ''}</p>
+                                
+                                <div class="flex justify-between items-center mt-4">
+                                    
+                                    <div class="flex flex-col">
+                                        <span class="text-[#a3e635] font-black text-xl">R$ ${parseFloat(item.preco).toFixed(2)}</span>
+                                    </div>                                   
+
+                                    <button onclick="${temEstoque ? `adicionarNoCarrinho(${item.id})` : ''}" ${!temEstoque ? 'disabled' : ''} class="p-3 rounded-xl transition-all shadow-lg ${temEstoque ? 'bg-[#f48c2e] hover:scale-110 active:scale-95' : 'bg-gray-700 cursor-not-allowed'}">
+                                        <i data-lucide="${temEstoque ? 'plus' : 'slash'}" size="20" class="text-white"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                }
+            });
+            container.innerHTML = htmlFinal;
+            lucide.createIcons();
+        }
+
+        function adicionarNoCarrinho(id) {
+            const item = LANCHES.find(l => l.id == id);
+            if (!item) return;
+
+            if (item.categoria !== 'Lanche' && (!item.subitens || item.subitens.trim() === "")) {
+                carrinho.push({ ...item, adicionais: [], totalItem: parseFloat(item.preco), observacao: "" });
+                atualizarCarrinho();
+                if(!document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
+                return;
+            }
+
+            itemSendoEditado = { ...item };
+            adicionaisSelecionados = [];
+            document.getElementById('modal-titulo').innerText = item.nome;
+            document.getElementById('modal-preco-base').innerText = `R$ ${parseFloat(item.preco).toFixed(2)}`;
+            
+            const listaModal = document.getElementById('lista-adicionais-modal');
+
+            if (item.categoria === 'Doce' && item.subitens) {
+                const pares = item.subitens.split(',').map(p => p.trim());
+                listaModal.innerHTML = pares.map(par => {
+                    const [nomeSabor, qtdSabor] = par.split(':');
+                    const estoque = parseInt(qtdSabor) || 0;
+                    const temEstoque = estoque > 0;
+
+                    return `
+                    <label class="flex items-center justify-between p-4 bg-[#2d3139] rounded-2xl border border-gray-700 ${!temEstoque ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:border-[#a3e635]'}">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="sabor_doce" ${!temEstoque ? 'disabled' : ''} class="w-5 h-5 accent-[#a3e635]" onchange="selecionarSabor('${nomeSabor}')">
+                            <span class="text-sm font-bold uppercase text-white">${nomeSabor}</span>
+                        </div>
+                        <!--
+                            <span class="text-[#a3e635] font-bold text-xs">${temEstoque ? `Disp: ${estoque}` : 'ESGOTADO'}</span>
+                        --> 
+
+                    </label>`;
+                }).join('');
+            } else {
+                const adds = LANCHES.filter(l => l.categoria === 'Adicional');
+                listaModal.innerHTML = adds.map(add => `
+                    <label class="flex items-center justify-between p-4 bg-[#2d3139] rounded-2xl border border-gray-700 cursor-pointer hover:border-[#a3e635]">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" class="w-5 h-5 accent-[#a3e635]" onchange="toggleAdicional(${add.id}, ${add.preco}, '${add.nome}', this.checked)">
+                            <span class="text-sm font-bold uppercase text-white">${add.nome}</span>
+                        </div>
+                        <span class="text-[#a3e635] font-bold text-xs">+ R$ ${parseFloat(add.preco).toFixed(2)}</span>
+                    </label>`).join('');
+            }
+
+            atualizarTotalModal();
+            document.getElementById('modal-custom').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function toggleAdicional(id, preco, nome, isChecked) {
+            if (isChecked) adicionaisSelecionados.push({ id, preco: parseFloat(preco), nome });
+            else adicionaisSelecionados = adicionaisSelecionados.filter(a => a.id !== id);
+            atualizarTotalModal();
+        }
+
+        function selecionarSabor(nome) {
+            adicionaisSelecionados = [{ id: Math.random(), preco: 0, nome: nome }];
+            atualizarTotalModal();
+        }
+
+        function atualizarTotalModal() {
+            const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
+            document.getElementById('modal-total-final').innerText = `R$ ${total.toFixed(2)}`;
+        }
+
+        function confirmarPersonalizacao() {
+            if (itemSendoEditado.categoria === 'Doce' && adicionaisSelecionados.length === 0) {
+                alert("Por favor, selecione um sabor antes de adicionar!");
+                return; 
+            }
+            const total = parseFloat(itemSendoEditado.preco) + adicionaisSelecionados.reduce((acc, a) => acc + a.preco, 0);
+            carrinho.push({ ...itemSendoEditado, adicionais: [...adicionaisSelecionados], totalItem: total, observacao: "" });
+            fecharModal(); atualizarCarrinho(); if(!document.getElementById('cart-drawer').classList.contains('open')) toggleCart();
+        }
+
+        function fecharModal() { document.getElementById('modal-custom').classList.add('hidden'); }
+
+    async function aplicarCupom() {
+        const codigo = document.getElementById('cupom-input').value.toUpperCase().trim();
+        const { data } = await supabaseClient.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).single();
+        const msgCupom = document.getElementById('cupom-msg');
+        
+        if (data && (!data.expira_em || new Date(data.expira_em) > new Date()) && data.total_usado < data.limite_usos) {
+            nomeCupomAtivo = data.codigo;
+            
+            // Verifica se é cupom de frete grátis ou porcentagem
+            if (data.frete_gratis === true) {
+                isFreteGratis = true;
+                porcentagemCupom = 0; // Zera a porcentagem para não dar 2 descontos
+                msgCupom.innerText = `CUPOM OK: FRETE GRÁTIS!`;
+            } else {
+                isFreteGratis = false;
+                porcentagemCupom = parseFloat(data.valor);
+                msgCupom.innerText = `CUPOM OK: ${porcentagemCupom}% OFF`;
+            }
+            
+            msgCupom.className = "text-[10px] mt-1 text-[#a3e635] font-bold block";
+        } else {
+            porcentagemCupom = 0; 
+            nomeCupomAtivo = "";
+            isFreteGratis = false; // Reseta se der erro
+            msgCupom.innerText = "CUPOM INVÁLIDO";
+            msgCupom.className = "text-[10px] mt-1 text-red-500 font-bold block";
+        }
+        atualizarCarrinho();
+    }
+
+        function atualizarCarrinho() {
+            const container = document.getElementById('cart-items');
+            const totalEl = document.getElementById('cart-total');
+            const subtotalStep1El = document.getElementById('subtotal-step1');
+            const countEl = document.getElementById('cart-count');
+            const btnFinalizar = document.getElementById('btn-finalizar');
+
+            if (carrinho.length === 0) {
+                container.innerHTML = '<p class="text-gray-600 text-center uppercase font-bold text-[10px] mt-10">Carrinho vazio</p>';
+                btnFinalizar.disabled = true;
+                btnFinalizar.className = "w-full py-4 bg-gray-700 text-gray-500 font-black uppercase rounded-2xl transition-all";
+                totalEl.innerText = "R$ 0,00";
+                if(subtotalStep1El) subtotalStep1El.innerText = "R$ 0,00";
+                if(countEl) countEl.classList.add('hidden');
+            } else {
+                container.innerHTML = carrinho.map((item, index) => `
+                    <div class="bg-[#23272f] p-6 rounded-2xl flex flex-col gap-3 border border-gray-800">
+                        <div class="flex justify-between">
+                            <div>
+                                <p class="font-black text-white uppercase italic">${item.nome}</p>
+                                <p class="text-[#f48c2e] font-black text-sm">R$ ${(item.totalItem || item.preco).toFixed(2)}</p>
+                                ${item.adicionais?.length ? `<p class="text-[9px] text-gray-500 uppercase font-bold">+ ${item.adicionais.map(a => a.nome).join(', ')}</p>` : ''}
+                            </div>
+                            <button onclick="removerDoCarrinho(${index})" class="text-red-500"><i data-lucide="trash-2" size="18"></i></button>
+                        </div>
+                        <textarea onchange="salvarObservacao(${index}, this.value)" placeholder="Observação (Ex: Tirar cebola)" class="bg-[#1a1d23] p-3 rounded-xl text-xs outline-none border border-gray-700">${item.observacao || ''}</textarea>
+                    </div>`).join('');
+
+                // --- MATEMÁTICA CORRIGIDA AQUI ---
+                const freteFinal = isFreteGratis ? 0 : taxaEntrega; // Se tiver cupom, vira 0
+                const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
+                const valorDesconto = (subtotal * porcentagemCupom) / 100;
+                
+                // A mágica acontece nesta linha (usando freteFinal no lugar de taxaEntrega)
+                const totalFinal = Math.max(0, subtotal + freteFinal - valorDesconto);
+                // ---------------------------------
+                
+                totalEl.innerText = `R$ ${totalFinal.toFixed(2)}`;
+                if(subtotalStep1El) subtotalStep1El.innerText = `R$ ${subtotal.toFixed(2)}`;
+                
+                // Efeito visual no texto (Risca o valor e escreve GRÁTIS de verde)
+                if (isFreteGratis && taxaEntrega > 0) {
+                    document.getElementById('txt-frete').innerHTML = `Frete: <span class="line-through text-red-500">R$ ${taxaEntrega.toFixed(2)}</span> <span class="text-[#a3e635]">GRÁTIS</span>`;
+                } else {
+                    document.getElementById('txt-frete').innerText = `Frete: R$ ${taxaEntrega.toFixed(2)}`;
+                }
+
+                btnFinalizar.disabled = false;
+                btnFinalizar.className = "w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase rounded-2xl hover:scale-[1.02] transition-all";
+                
+                if(countEl) {
+                    countEl.classList.remove('hidden'); 
+                    countEl.innerText = carrinho.length;
+                }
+            }
+            lucide.createIcons();
+        }
+
+        // --- FUNÇÕES DE NAVEGAÇÃO DO CARRINHO (MESCLADAS E CORRIGIDAS) ---
+
+        function toggleCart() {
+            const drawer = document.getElementById('cart-drawer');
+            const overlay = document.getElementById('cart-overlay');
+            const avatar = document.getElementById('avatar-container');
+            
+            const isOpen = drawer.classList.toggle('open');
+            if(overlay) overlay.classList.toggle('hidden');
+            if(avatar) avatar.style.opacity = isOpen ? "0" : "1";
+
+            // Garante que toda vez que fechar/abrir, volte para a tela de itens!
+            voltarParaItens(); 
+        }
+
+        function avancarCheckout() {
+            if (carrinho.length === 0) {
+                alert("Seu carrinho está vazio! Adicione alguns lanches primeiro.");
+                return;
+            }
+            document.getElementById('carrinho-step-1').classList.add('hidden');
+            document.getElementById('carrinho-step-2').classList.remove('hidden');
+            atualizarCarrinho(); 
+        }
+
+        function voltarParaItens() {
+            document.getElementById('carrinho-step-2').classList.add('hidden');
+            document.getElementById('carrinho-step-1').classList.remove('hidden');
+        }
+
+        // -----------------------------------------------------------------
+
+        async function finalizarPedido() {
+            const freteFinal = isFreteGratis ? 0 : taxaEntrega;
+            const subtotal = carrinho.reduce((acc, i) => acc + (i.totalItem || parseFloat(i.preco)), 0);
+            const valorDesconto = (subtotal * porcentagemCupom) / 100;
+            const totalFinal = Math.max(0, subtotal + freteFinal - valorDesconto);
+            const rua = document.getElementById('rua').value;
+            const num = document.getElementById('numero').value;
+            
+            
+            if (tipoEntrega === 'delivery' && (!rua || !num || taxaEntrega === 0)) {
+                alert("Calcule o frete antes de finalizar!"); return;
+            }
+
+            const btn = document.getElementById('btn-finalizar');
+            const txtOriginal = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Finalizando...`;
+            btn.disabled = true;
+
+            try {
+                if (nomeCupomAtivo) await supabaseClient.rpc('incrementar_uso_cupom', { codigo_cupom: nomeCupomAtivo });
+
+                for (const itemCarrinho of carrinho) {
+                    const itemOriginal = LANCHES.find(l => l.id === itemCarrinho.id);
+                    if (!itemOriginal) continue;
+
+                    if (itemOriginal.categoria === 'Doce' && itemOriginal.subitens) {
+                        const saborEscolhido = itemCarrinho.adicionais?.length > 0 ? itemCarrinho.adicionais[0].nome : null;
+                        if (saborEscolhido) {
+                            const pares = itemOriginal.subitens.split(',').map(p => p.trim());
+                            const novosPares = pares.map(par => {
+                                const [nomeSabor, qtdSabor] = par.split(':');
+                                if (nomeSabor.trim() === saborEscolhido) {
+                                    const novaQtd = Math.max(0, parseInt(qtdSabor) - 1);
+                                    return `${nomeSabor.trim()}:${novaQtd}`;
+                                }
+                                return par;
+                            });
+                            const novaStringSubitens = novosPares.join(', ');
+                            itemOriginal.subitens = novaStringSubitens; 
+                            await supabaseClient.from('lanches').update({ subitens: novaStringSubitens }).eq('id', itemOriginal.id);
+                        }
+                    } 
+                    else if (itemOriginal.categoria !== 'Lanche' && itemOriginal.estoque > 0) {
+                        const novoEstoque = itemOriginal.estoque - 1;
+                        itemOriginal.estoque = novoEstoque;
+                        await supabaseClient.from('lanches').update({ estoque: novoEstoque }).eq('id', itemOriginal.id);
+                    }
+                }
+
+                let itensTexto = "";
+                ['Lanche', 'Doce', 'Bebida'].forEach(cat => {
+                    const itens = carrinho.filter(i => i.categoria === cat);
+                    if (itens.length > 0) {
+                        itensTexto += `\n*${cat.toUpperCase()}S:*\n`;
+                        itens.forEach(i => {
+                            itensTexto += `• ${i.nome} (R$ ${(i.totalItem || i.preco).toFixed(2)})`;
+                            if (i.adicionais?.length) {
+                                const label = i.categoria === 'Doce' ? 'Sabor:' : 'Extras:';
+                                itensTexto += `\n  ┗ ${label} ${i.adicionais.map(a => a.nome).join(', ')}`;
+                            }
+                            if (i.observacao) itensTexto += `\n  ┗ Obs: ${i.observacao.trim()}`;
+                            itensTexto += `\n`;
+                        });
+                    }
+                });
+
+                let msgWhatsApp = `*CRAZY DOG - PEDIDO*\n------------------------------${itensTexto}------------------------------`;
+                msgWhatsApp += `\n*ENTREGA:* ${tipoEntrega === 'retirada' ? 'RETIRADA' : 'MOTOBOY'}`;
+                
+                if (tipoEntrega === 'delivery') {
+                    msgWhatsApp += `\n*ENDEREÇO:* ${rua}, ${num}`;
+                    msgWhatsApp += `\n*BAIRRO:* ${document.getElementById('bairro_display').value}`;
+                    if (document.getElementById('referencia').value) msgWhatsApp += `\n*REF:* ${document.getElementById('referencia').value}\n------------------------------\n`;
+                    msgWhatsApp += `\n*TAXA:* ${isFreteGratis ? 'GRÁTIS (Cupom)' : `R$ ${taxaEntrega.toFixed(2)}`}`;
+                }
+                
+                if (porcentagemCupom > 0) msgWhatsApp += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${valorDesconto.toFixed(2)})`;
+                msgWhatsApp += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
+
+                const linkWhatsApp = `https://wa.me/5515981033150?text=${encodeURIComponent(msgWhatsApp)}`;
+                window.location.href = linkWhatsApp;
+                
+                // Esvazia o carrinho depois de enviar
+                carrinho = [];
+                atualizarCarrinho();
+                toggleCart();
+
+            } catch (err) {
+                console.error(err);
+                alert("Erro ao finalizar o pedido. Tente novamente.");
+            } finally {
+                btn.innerHTML = txtOriginal;
+                btn.disabled = false;
+            }
+        }
+
+        function removerDoCarrinho(index) { carrinho.splice(index, 1); atualizarCarrinho(); }
+        function salvarObservacao(index, texto) { carrinho[index].observacao = texto; }
+    </script>
 </body>
 </html>

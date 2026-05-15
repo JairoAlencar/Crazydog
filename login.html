@@ -7,7 +7,6 @@
     <title>CrazyDog - Login Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Paleta de Cores e Estilos Globais */
         :root {
@@ -27,42 +26,46 @@
         }
         /* Efeito de foco no input para feedback visual */
         .input-field:focus { 
-            border-color: var(--primary-orange); 
+            border-color: var(--primary-green); 
             outline: none; 
         }
     </style>
 </head>
 <body class="font-sans min-h-screen flex flex-col">
 
-    <header class="p-4 flex justify-start">
-        <a href="index.html" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
-            <i data-lucide="arrow-left"></i> Voltar ao Cardápio
+    <header class="p-6 flex justify-start">
+        <a href="index.html" class="flex items-center gap-2 text-gray-500 font-bold uppercase tracking-wider text-xs hover:text-white transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar ao Cardápio
         </a>
     </header>
 
     <main class="flex-1 flex items-center justify-center p-4">
         <div class="w-full max-w-md bg-[#2d3139] rounded-3xl shadow-2xl overflow-hidden border border-gray-800">
             
-            <div class="bg-[#1a1d23] p-6 text-center border-b border-gray-800">
-                <img src="logo-sem-fundo.png" alt="CrazyDog" class="h-20 mx-auto object-contain">
-                <h2 class="text-[#f48c2e] font-black uppercase italic mt-4 tracking-widest">Acesso Restrito</h2>
+            <div class="bg-[#1a1d23] p-8 text-center border-b border-gray-800">
+                <img src="logo-sem-fundo.png" alt="CrazyDog" class="h-24 mx-auto object-contain drop-shadow-lg">
+                <h2 class="text-[#f48c2e] font-black uppercase italic mt-4 tracking-widest text-lg">Acesso Restrito</h2>
             </div>
 
             <div class="p-8">
                 <form id="form-login" class="space-y-6">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-gray-500 mb-2">E-mail do Administrador</label>
-                        <input type="email" id="email" required class="input-field w-full p-4 rounded-xl">
+                        <label class="block text-xs font-bold uppercase text-gray-400 tracking-wider mb-2 ml-2">E-mail do Administrador</label>
+                        <input type="email" id="email" required class="input-field w-full p-4 rounded-xl font-bold">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-gray-500 mb-2">Senha</label>
-                        <input type="password" id="senha" required class="input-field w-full p-4 rounded-xl">
+                        <label class="block text-xs font-bold uppercase text-gray-400 tracking-wider mb-2 ml-2">Senha</label>
+                        <input type="password" id="senha" required class="input-field w-full p-4 rounded-xl font-bold font-mono tracking-widest">
                     </div>
-                    <button type="submit" class="w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase tracking-widest rounded-2xl hover:shadow-[0_0_20px_rgba(163,230,53,0.4)] transition-all">
+
+                    <p id="msg-erro" class="text-red-500 text-sm font-bold text-center hidden"></p>
+
+                    <button type="submit" class="w-full py-4 bg-[#a3e635] text-[#1a1d23] font-black uppercase tracking-widest rounded-2xl hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(163,230,53,0.3)] transition-all">
                         Entrar no Painel
                     </button>
-                    <p class="text-center text-[15px] text-gray-600 uppercase font-bold tracking-tighter">
-                        Somente pessoal autorizado.
+                    
+                    <p class="text-center text-[10px] text-gray-500 uppercase font-bold tracking-widest mt-4">
+                        <i data-lucide="shield-alert" class="w-3 h-3 inline-block mb-0.5"></i> Somente pessoal autorizado
                     </p>
                 </form>
             </div>
@@ -70,60 +73,45 @@
     </main>
 
     <script>
-        // 1. Instanciação do Cliente Supabase
-        const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4bWl2aG1iaWxuZmt4dXNheGlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4OTE1MjcsImV4cCI6MjA4NzQ2NzUyN30.dslzpVwwI3Kua52dS1JpD5SrbkSNm68dED7nToLw2nM';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        lucide.createIcons();
+
+        // ==========================================
+        // 1. DEFINA AQUI SEU USUÁRIO E SENHA
+        // ==========================================
+        const USUARIO_MASTER = "admin@crazydog.com";
+        const SENHA_MASTER = "crazy123";
 
         // 2. Interceptação do Formulário de Login
-        document.getElementById('form-login').addEventListener('submit', async function(e) {
-            e.preventDefault(); // Impede o recarregamento da página
+        document.getElementById('form-login').addEventListener('submit', function(e) {
+            e.preventDefault(); 
             
-            const email = document.getElementById('email').value;
-            const senha = document.getElementById('senha').value;
+            const emailDigitado = document.getElementById('email').value.trim();
+            const senhaDigitada = document.getElementById('senha').value.trim();
+            const msgErro = document.getElementById('msg-erro');
 
-            // Chamada ao serviço de Autenticação do Supabase
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: senha,
-            });
+            // Oculta a mensagem de erro a cada nova tentativa
+            msgErro.classList.add('hidden');
 
-            if (error) {
-                // Feedback em caso de credenciais inválidas ou erro de rede
-                alert("Acesso Negado: " + error.message);
+            // 3. Verificação de Acesso
+            if (emailDigitado === USUARIO_MASTER && senhaDigitada === SENHA_MASTER) {
+                // Armazena a "Chave" no navegador
+                localStorage.setItem('crazydog_auth', 'true');
+                
+                // Entra no sistema
+                window.location.href = "entregas.html";
             } else {
-                // 3. Verificação de Perfil Administrativo
-                // Definimos um e-mail mestre para controle de acesso ao Dashboard
-                if (data.user.email === "admin@crazydog.com") {
-                    // Armazena flag no navegador para proteger as rotas internas via JS
-                    localStorage.setItem('is_admin', 'true');
-                    // Redirecionamento para a Dashboard
-                    window.location.href = "admin.html";
-                } else {
-                    // Proteção: Caso um usuário comum tente acessar, forçamos o log-out
-                    await supabaseClient.auth.signOut();
-                    alert("Este acesso não possui permissões administrativas.");
-                }
+                // Exibe erro na tela caso esteja errado
+                msgErro.innerText = "Acesso Negado: E-mail ou senha incorretos!";
+                msgErro.classList.remove('hidden');
             }
         });
-
-        // Inicializa os ícones do Lucide após o carregamento do DOM
-        lucide.createIcons();
     </script>
 
-    <footer class="mt-auto py-10 border-t border-gray-800 bg-[#1a1d23]">
-        <div class="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex flex-col items-center md:items-start">
-                </div>
-
-            <div class="text-center">
-                <p class="text-gray-400 text-xs font-medium">
-                    &copy; 2026 <span class="text-white">Jairo Alencar</span>. Todos os direitos reservados.
-                </p>
-            </div>
-
-            <div class="flex gap-4">
-                </div>
+    <footer class="py-8 border-t border-gray-800 bg-[#1a1d23]">
+        <div class="max-w-6xl mx-auto px-6 text-center">
+            <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">
+                &copy; 2026 <span class="text-gray-300">Jairo Alencar</span>. Todos os direitos reservados.
+            </p>
         </div>
     </footer>
 </body>

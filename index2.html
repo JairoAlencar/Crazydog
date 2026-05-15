@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <link rel="icon" href="logo-sem-fundo.png" type="image/x-icon">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrazyDog - Lanchonete</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC2N-XgovNRshXkA9XKgk-O0jwevjYhq5w&libraries=places"></script>
+    <style>
+        /* Variáveis de cores globais da marca */
+        :root {
+            --bg-dark: #23272f;
+            --card-dark: #2d3139;
+            --primary-orange: #f48c2e;
+            --primary-green: #a3e635;
+        }
+        body { background-color: var(--bg-dark); color: white; }
+        
+        /* Estilização da Gaveta do Carrinho (Cart Drawer) */
+        .cart-drawer { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        .cart-drawer.open { transform: translateX(0); }
+        .orange-border-card { border: 2px solid var(--primary-orange); border-radius: 1.5rem; }
+        
+        /* Animação de pulso para a logo no banner */
+        @keyframes float-pulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(244, 140, 46, 0.4)); }
+            50% { transform: scale(1.05) translateY(-10px); filter: drop-shadow(0 0 40px rgba(244, 140, 46, 0.8)); }
+            100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(244, 140, 46, 0.4)); }
+        }
+        .animate-logo { animation: float-pulse 3s infinite ease-in-out; }
+        
+        /* Animação para mensagens de ajuda do avatar */
+        @keyframes fade-slide {
+            0%, 10% { opacity: 0; transform: translateX(-10px); }
+            20%, 80% { opacity: 1; transform: translateX(0); }
+            90%, 100% { opacity: 0; transform: translateX(-10px); }
+        }
+        .animate-msg { animation: fade-slide 5s infinite; }
+
+        /* Container do card precisa ter overflow-hidden e relative */
+        .ribbon-wrapper {
+            width: 130px;
+            height: 140px;
+            overflow: hidden;
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            z-index: 5;
+        }
+
+        .ribbon {
+            font: bold 13px sans-serif;
+            color: #1a1d23;
+            text-align: center;
+            text-transform: uppercase;
+            transform: rotate(-45deg);
+            position: relative;
+            padding: 9px 0;
+            left: -40px;
+            top: 30px;
+            width: 180px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .ribbon-lancamento { background-color: #a3e635; } /* Verde */
+        .ribbon-destaque { background-color: #f48c2e; }   /* Laranja */
+        .ribbon-promocao { background-color: #ef4444; } /*Vermelho*/
+    </style>
+</head>
+<body class="font-sans min-h-screen flex flex-col overflow-x-hidden">
+
+    <header class="bg-[#1a1d23] p-4 sticky top-0 z-20 shadow-lg flex justify-end items-center border-b border-gray-800">
+        <div class="flex items-center gap-3">
+            <a href="login.html" class="p-2 bg-[#2d3139] rounded-xl hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="user" class="text-white"></i>
+            </a>
+            <button onclick="toggleCart()" class="relative p-2 bg-[#2d3139] rounded-xl hover:bg-gray-700 transition-colors flex items-center justify-center">
+                <i data-lucide="shopping-cart" class="text-white"></i>
+                <span id="cart-count" class="hidden absolute -top-1 -right-1 bg-[#f48c2e] text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center">0</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="relative min-h-[400px] bg-[#1a1d23] flex items-center justify-center overflow-hidden border-b-4 border-[#f48c2e] relative z-0">
+        
+        <div class="absolute inset-0 z-50 pointer-events-none flex items-center justify-center">
+            <div class="absolute w-[150%] h-16 bg-[#ef4444] rotate-[-25deg] shadow-2xl flex items-center justify-center gap-6 border-y-4 border-white">
+                <span class="text-white font-black uppercase italic text-2xl tracking-widest">CRAZY DOG  - EM MANUTENÇÃO</span>
+            </div>
+        </div>
+        <div class="absolute inset-0 opacity-20 bg-cover bg-center" style="background-image: url('banner.png'); filter: blur(5px);"></div>
+    </div>
+
+</body>
+</html>
