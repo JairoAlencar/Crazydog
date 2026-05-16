@@ -84,7 +84,7 @@
             return new Promise((resolve) => {
                 const service = new google.maps.DistanceMatrixService();
                 service.getDistanceMatrix({
-                    origins: ["Rua Pedro Orsi, 74 - Vila Nova Itapetininga - SP"],
+                    origins: [ENDERECO_ORIGEM],
                     destinations: [enderecoDestino],
                     travelMode: google.maps.TravelMode.DRIVING,
                 }, (response, status) => {
