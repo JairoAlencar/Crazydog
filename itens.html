@@ -37,20 +37,10 @@
                 
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Categoria</label>
-                    <select id="categoria" onchange="toggleCampos()" class="input-field w-full p-4 rounded-xl outline-none">
+                    <select id="categoria" onchange="toggleCampos()" required class="input-field w-full p-4 rounded-xl outline-none font-bold cursor-pointer">
                         <option value="">Carregando categorias...</option>
                     </select>
                 </div>
-
-                <div class="flex flex-col md:flex-row gap-4 w-full">
-    <select id="categoria-pai" required class="w-full md:w-1/2 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#f48c2e] text-white cursor-pointer transition-colors">
-        <option value="">Carregando categorias...</option>
-    </select>
-
-    <select id="categoria-filha" disabled class="w-full md:w-1/2 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#f48c2e] text-white cursor-pointer opacity-50 transition-all">
-        <option value="">Selecione primeiro a Principal</option>
-    </select>
-</div>
 
                 <div class="md:col-span-1">
                     <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Nome</label>
@@ -75,7 +65,7 @@
 
                 <div class="md:col-span-2 hidden" id="div-subitens">
                     <label class="block text-xs font-bold uppercase text-[#a3e635] mb-2">Subitens (Sabores e Estoque)</label>
-                    <div id="container-linhas-subitens" class="space-y-3"></div>                   
+                    <div id="container-linhas-subitens" class="space-y-3"></div>                  
                     <p class="text-[10px] text-gray-500 mt-2">* Deixe o nome vazio para ignorar a linha.</p>
                 </div>
 
@@ -134,7 +124,6 @@
 
         let estadoSubitens = [{ nome: '', qtd: '' }];
 
-        // Função que desenha as linhas na tela
         function renderizarLinhasSubitens() {
             const container = document.getElementById('container-linhas-subitens');
             
@@ -166,98 +155,48 @@
             lucide.createIcons();
         }
 
-        // Funções de controle
         function atualizarLinha(index, campo, valor) { estadoSubitens[index][campo] = valor; }
         function adicionarLinha() { estadoSubitens.push({ nome: '', qtd: '' }); renderizarLinhasSubitens(); }
         function removerLinha(index) { 
             estadoSubitens.splice(index, 1); 
-            if(estadoSubitens.length === 0) estadoSubitens.push({ nome: '', qtd: '' }); // Mantém pelo menos 1
+            if(estadoSubitens.length === 0) estadoSubitens.push({ nome: '', qtd: '' }); 
             renderizarLinhasSubitens(); 
         }
 
-        let todasCategoriasDB = [];
+        // ==========================================
+        // LÓGICA SIMPLIFICADA DE CATEGORIA ÚNICA
+        // ==========================================
+        async function popularCategorias() {
+            const selectCategoria = document.getElementById('categoria');
+            if (!selectCategoria) return;
 
-async function popularCategorias() {
-    const selectPai = document.getElementById('categoria-pai');
-    const selectFilha = document.getElementById('categoria-filha');
-    if (!selectPai || !selectFilha) return;
+            // Busca as categorias no banco (tabela 'categorias')
+            const { data, error } = await supabaseClient
+                .from('categorias')
+                .select('*')
+                .order('ordem', { ascending: true })
+                .order('nome', { ascending: true });
 
-    // 1. Busca TUDO do banco e guarda na memória para não ficar travando a tela
-    const { data, error } = await supabaseClient
-    .from('lanches')
-    .select('*') // O '*' garante que pegamos a subcategoria nova
-    .order('nome', { ascending: true });
+            if (error) {
+                console.error("Erro ao carregar categorias:", error.message);
+                selectCategoria.innerHTML = '<option value="">Erro ao carregar</option>';
+                return;
+            }
 
-    if (error) {
-        console.error("Erro no select de itens:", error.message);
-        selectPai.innerHTML = '<option value="">Erro ao carregar</option>';
-        return;
-    }
-
-    todasCategoriasDB = data;
-
-    // 2. Filtra só quem é "Pai" (parent_id é null)
-    const principais = todasCategoriasDB.filter(c => !c.parent_id);
-
-    // 3. Preenche a caixa de Categoria Principal
-    selectPai.innerHTML = '<option value="">Selecione a Categoria Principal</option>';
-    principais.forEach(pai => {
-        const option = document.createElement('option');
-        option.value = pai.nome; // Mantemos o nome para gravar no banco
-        option.dataset.id = pai.id; // Esconde o ID aqui para usarmos de filtro depois
-        option.textContent = pai.nome;
-        selectPai.appendChild(option);
-    });
-
-    // 4. Cria o "Ouvinte" para a mágica acontecer quando você escolhe um Pai
-    selectPai.addEventListener('change', () => {
-        // Pega a opção que foi selecionada
-        const opcaoSelecionada = selectPai.options[selectPai.selectedIndex];
-        const paiId = opcaoSelecionada.dataset.id;
-        
-        // Limpa a caixa filha e prepara
-        selectFilha.innerHTML = '<option value="">Selecione a Subcategoria</option>';
-        
-        // Se voltou para o "Selecione", ou se for um Pai sem ID, desativa a filha
-        if (!paiId) {
-            selectFilha.disabled = true;
-            selectFilha.classList.add('opacity-50');
-            selectFilha.innerHTML = '<option value="">Selecione primeiro a Principal</option>';
-            return;
-        }
-
-        // Filtra as filhas que pertencem a esse Pai
-        const filhas = todasCategoriasDB.filter(c => c.parent_id == paiId);
-
-        if (filhas.length > 0) {
-            // Se tem filhas -> Acorda a caixa 2 e preenche
-            selectFilha.disabled = false;
-            selectFilha.classList.remove('opacity-50');
-            
-            filhas.forEach(filha => {
+            selectCategoria.innerHTML = '<option value="">Selecione uma categoria...</option>';
+            data.forEach(cat => {
                 const option = document.createElement('option');
-                option.value = filha.nome; 
-                option.textContent = filha.nome;
-                selectFilha.appendChild(option);
+                option.value = cat.nome;
+                option.textContent = cat.nome;
+                selectCategoria.appendChild(option);
             });
-        } else {
-            // Se esse Pai não tem filhas -> Mantém desativada
-            selectFilha.disabled = true;
-            selectFilha.classList.add('opacity-50');
-            selectFilha.innerHTML = '<option value="">Nenhuma subcategoria (Opcional)</option>';
         }
-    });
-}
-
-// Roda a função quando abre a página
-popularCategorias();
-
-        // Chame ela logo no início do script para preencher o campo assim que abrir a tela
+        
         popularCategorias();
 
         function renderCategoriasAdmin() {
             const container = document.getElementById('categorias-container');
-            const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional'];
+            const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional']; // Pode alterar conforme necessário
             container.innerHTML = '';
 
             categorias.forEach(cat => {
@@ -265,7 +204,6 @@ popularCategorias();
                 
                 const section = document.createElement('div');
                 
-                // Cabeçalho da categoria
                 let htmlContent = `
                     <div class="flex items-center gap-2 mb-4 border-b border-gray-700 pb-2">
                         <i data-lucide="layers" class="text-[#a3e635] w-4 h-4"></i>
@@ -274,10 +212,7 @@ popularCategorias();
                     <div id="lista-${cat}" class="space-y-2">
                 `;
 
-                // Mapeia os itens e calcula o estoque dinamicamente
                 htmlContent += itens.map(item => {
-                    
-                    // --- LÓGICA DE SOMA DO ESTOQUE ---
                     let estoqueExibicao = item.estoque || 0;
                     let detalhesSaboresHTML = ''; 
 
@@ -286,16 +221,13 @@ popularCategorias();
                             return total + (parseInt(par.split(':')[1]) || 0);
                         }, 0);
 
-                        // Limpando as tags antigas e usando o " | " como separador
                         const saboresFormatados = item.subitens.split(',').map(par => {
                             const [nome, qtd] = par.split(':');
                             return `${nome.trim()}: ${qtd.trim()}`;
                         }).join(' | ');
 
-                        // INJETANDO EXATAMENTE AS MESMAS CLASSES DO <P> DE CIMA
                         detalhesSaboresHTML = `<p class="text-[#a3e635] text-[10px] font-bold">${saboresFormatados}</p>`;
                     }
-                    // ---------------------------------
 
                     return `
                         <div data-id="${item.id}" class="bg-[#1a1d23] p-4 rounded-2xl flex justify-between items-center border border-gray-800 shadow-sm">
@@ -311,10 +243,10 @@ popularCategorias();
                                 </div>
                             </div>
                             <div class="flex gap-1">
-                                <button onclick="prepararEdicaoPeloId(${item.id})" class="text-blue-400 p-2 hover:bg-blue-500/10 rounded-lg">
+                                <button type="button" onclick="prepararEdicaoPeloId(${item.id})" class="text-blue-400 p-2 hover:bg-blue-500/10 rounded-lg">
                                     <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </button>
-                                <button onclick="removerLanchePeloId(${item.id})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg">
+                                <button type="button" onclick="removerLanchePeloId(${item.id})" class="text-red-500 p-2 hover:bg-red-500/10 rounded-lg">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                             </div>
@@ -339,23 +271,20 @@ popularCategorias();
             lucide.createIcons();
         }
 
-        // Variável de controle
         let modoSaboresAtivo = false;
 
-        // 1. O botão que o utilizador clica (Este sim pode limpar dados)
         function toggleModoSabores() {
             modoSaboresAtivo = !modoSaboresAtivo;
             
             if (modoSaboresAtivo) {
-                document.getElementById('estoque').value = 0; // O utilizador ligou os sabores, zeramos o stock geral
+                document.getElementById('estoque').value = 0; 
             } else {
-                estadoSubitens = [{ nome: '', qtd: '' }]; // O utilizador desligou, limpamos as linhas
+                estadoSubitens = [{ nome: '', qtd: '' }]; 
             }
             
             aplicarVisualModoSabores();
         }
 
-        // 2. A função que apenas esconde e mostra as Divs (Sem apagar nada!)
         function aplicarVisualModoSabores() {
             const divQtde = document.getElementById('div-quantidade');
             const divSubitens = document.getElementById('div-subitens');
@@ -377,17 +306,15 @@ popularCategorias();
             lucide.createIcons();
         }
 
-        // 3. O gatilho principal das categorias
         function toggleCampos() {
-            const categoriaPai = document.getElementById('categoria-pai').value;
-            const categoriaFilha = document.getElementById('categoria-filha').value;
+            const categoria = document.getElementById('categoria').value;
             const divBtnSabores = document.getElementById('div-btn-sabores');
             const divQtde = document.getElementById('div-quantidade');
             const divSubitens = document.getElementById('div-subitens');
 
             if (categoria === 'Doce') {
                 divBtnSabores.classList.remove('hidden');
-                aplicarVisualModoSabores(); // Apenas ajusta o visual, preservando a memória
+                aplicarVisualModoSabores(); 
             } else {
                 divBtnSabores.classList.add('hidden');
                 modoSaboresAtivo = false; 
@@ -397,6 +324,7 @@ popularCategorias();
                 renderizarLinhasSubitens();
             }
         }
+
         async function salvarNovaOrdem() {
             const itensOrdenados = [];
             ['Lanche', 'Doce', 'Bebida', 'Adicional'].forEach(cat => {
@@ -436,25 +364,19 @@ popularCategorias();
             btn.disabled = true;
             btn.innerText = "Salvando...";
 
-            // --- NOVA LÓGICA DE SUBITENS (Ajuste 3 A) ---
-            // Pega as linhas, ignora as vazias e junta no formato "Chocolate:10, Ninho:3"
             const stringFinalSubitens = estadoSubitens
                 .filter(linha => linha.nome && linha.nome.trim() !== '') 
                 .map(linha => `${linha.nome.trim()}:${linha.qtd || 0}`)
                 .join(', ');
-            // --------------------------------------------
 
             const lancheData = {
                 nome: document.getElementById('nome').value,
                 preco: parseFloat(document.getElementById('preco').value),
                 descricao: document.getElementById('desc').value,
-                categoria: document.getElementById('categoria').value,
+                categoria: document.getElementById('categoria').value, // Pega a categoria única
                 imagem: imageData,
                 estoque: parseInt(document.getElementById('estoque').value) || 0,
-                
-                // Substituímos a leitura do input pela string que acabamos de montar
                 subitens: stringFinalSubitens, 
-                
                 tag: document.getElementById('tag').value
             };
 
@@ -487,21 +409,19 @@ popularCategorias();
             document.getElementById('estoque').value = item.estoque || 0;
             document.getElementById('tag').value = item.tag || "";
             
-            // Análise da Base de Dados
             const stringDoBanco = item.subitens || '';
             
             if (stringDoBanco.trim() !== '') {
-                modoSaboresAtivo = true; // Tem sabores, liga o modo!
+                modoSaboresAtivo = true; 
                 estadoSubitens = stringDoBanco.split(',').map(par => {
                     const [nome, qtd] = par.split(':');
                     return { nome: nome ? nome.trim() : '', qtd: qtd ? qtd.trim() : '' };
                 });
             } else {
-                modoSaboresAtivo = false; // É um doce simples (ou lanche), desliga o modo.
+                modoSaboresAtivo = false; 
                 estadoSubitens = [{ nome: '', qtd: '' }];
             }
             
-            // Agora sim, pede para atualizar o ecrã com a informação carregada
             toggleCampos();
 
             document.getElementById('titulo-form').innerText = "Editando: " + item.nome;
@@ -543,6 +463,7 @@ popularCategorias();
             localStorage.removeItem('is_admin');
             window.location.href = "login.html";
         }
+        
         toggleCampos();
         renderizarLinhasSubitens();
     </script>
