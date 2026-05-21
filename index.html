@@ -232,7 +232,7 @@
     <script>
         // Puxando API para calculo do frete
         const GOOGLE_MAPS_API_KEY = 'AIzaSyC2N-XgovNRshXkA9XKgk-O0jwevjYhq5w';
-        const ENDERECO_ORIGEM = 'Rua Adão Mariano Gomes, 370 - Jardim Brasil, Itapetininga - SP';
+        const ENDERECO_ORIGEM = 'Rua Pedro Orsi, 74 - Vila Nova Itapetininga - SP';
 
         // Configurações do Supabase
         const supabaseUrl = 'https://fxmivhmbilnfkxusaxid.supabase.co';
@@ -750,8 +750,16 @@
                 if (porcentagemCupom > 0) msgWhatsApp += `\n*CUPOM:* ${nomeCupomAtivo} (-R$ ${valorDesconto.toFixed(2)})`;
                 msgWhatsApp += `\n*TOTAL:* R$ ${totalFinal.toFixed(2)}\n------------------------------`;
 
-                const linkWhatsApp = `https://wa.me/5515981033150?text=${encodeURIComponent(msgWhatsApp)}`;
-                window.location.href = linkWhatsApp;
+                // 1. Troca o 'wa.me' pela API oficial e direta
+                const linkWhatsApp = `https://api.whatsapp.com/send?phone=5515981033150&text=${encodeURIComponent(msgWhatsApp)}`;
+
+                // 2. Tática Anti-Bloqueio: Cria um link fantasma e clica nele
+                const linkOculto = document.createElement('a');
+                linkOculto.href = linkWhatsApp;
+                // Importante: NÃO colocar target='_blank', pois o Safari bloqueia novas abas após requisições assíncronas
+                document.body.appendChild(linkOculto);
+                linkOculto.click();
+                document.body.removeChild(linkOculto);
                 
                 // Esvazia o carrinho depois de enviar
                 carrinho = [];
