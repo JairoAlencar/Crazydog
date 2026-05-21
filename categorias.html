@@ -31,18 +31,27 @@
 
         <div class="bg-[#2d3139] p-8 rounded-3xl border border-gray-800 mb-6 shadow-2xl">
             <h2 id="titulo-form-pai" class="text-[#a3e635] font-bold uppercase text-sm mb-6 italic">Nova Categoria</h2>
-            <form id="form-pai" class="flex flex-col md:flex-row gap-4">
+            <form id="form-pai" class="flex flex-col gap-4">
                 <input type="hidden" id="pai-id" value="">
                 
-                <input type="text" id="nome-pai" placeholder="Nome (Ex: Lanches)" required 
-                    class="flex-1 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#a3e635] text-white">
-                
-                <button type="submit" id="btn-submit-pai" class="bg-[#a3e635] text-[#1a1d23] px-8 py-4 font-black uppercase rounded-xl hover:scale-105 transition-all whitespace-nowrap">
-                    Salvar
-                </button>
-                <button type="button" id="btn-cancelar-pai" onclick="resetarPai()" class="hidden bg-gray-600 text-white px-8 py-4 font-black uppercase rounded-xl hover:bg-gray-500 transition-all whitespace-nowrap">
-                    Cancelar
-                </button>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="nome-pai" placeholder="Nome (Ex: Lanches)" required 
+                        class="flex-1 bg-[#1a1d23] border border-gray-700 p-4 rounded-xl font-bold outline-none focus:border-[#a3e635] text-white">
+                    
+                    <button type="submit" id="btn-submit-pai" class="bg-[#a3e635] text-[#1a1d23] px-8 py-4 font-black uppercase rounded-xl hover:scale-105 transition-all whitespace-nowrap">
+                        Salvar
+                    </button>
+                    <button type="button" id="btn-cancelar-pai" onclick="resetarPai()" class="hidden bg-gray-600 text-white px-8 py-4 font-black uppercase rounded-xl hover:bg-gray-500 transition-all whitespace-nowrap">
+                        Cancelar
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-3 px-2">
+                    <input type="checkbox" id="visivel-pai" checked class="w-5 h-5 accent-[#a3e635] cursor-pointer rounded">
+                    <label for="visivel-pai" class="text-xs font-bold uppercase tracking-widest text-gray-400 cursor-pointer">
+                        Exibir esta categoria na tela inicial do cliente
+                    </label>
+                </div>
             </form>
         </div>
 
@@ -78,8 +87,6 @@
 
         function renderizarTela(data) {
             const container = document.getElementById('lista-categorias');
-            
-            // Filtra apenas categorias principais (que não têm parent_id)
             const principais = data.filter(c => !c.parent_id);
 
             if (principais.length === 0) {
@@ -88,16 +95,17 @@
             }
 
             container.innerHTML = principais.map(pai => `
-                <div data-id="${pai.id}" class="bg-[#1a1d23] p-4 rounded-2xl border border-gray-700 shadow-lg flex flex-col gap-3">
+                <div data-id="${pai.id}" class="bg-[#1a1d23] p-4 rounded-2xl border border-gray-700 shadow-lg flex flex-col gap-3 ${pai.visivel === false ? 'opacity-50 border-dashed' : ''}">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-3">
                             <div class="cursor-grab active:cursor-grabbing text-gray-500 hover:text-white handle-pai transition-colors">
                                 <i data-lucide="grip-vertical"></i>
                             </div>
-                            <span class="font-black uppercase tracking-widest text-[#a3e635] text-lg">${pai.nome}</span>
+                            ${pai.visivel === false ? '<i data-lucide="eye-off" class="w-5 h-5 text-red-500"></i>' : '<i data-lucide="eye" class="w-5 h-5 text-[#a3e635]"></i>'}
+                            <span class="font-black uppercase tracking-widest text-[#a3e635] text-lg ${pai.visivel === false ? 'line-through text-gray-500' : ''}">${pai.nome}</span>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="prepararEdicao(${pai.id}, '${pai.nome}')" class="text-blue-400 hover:bg-blue-500/10 p-2 rounded-lg"><i data-lucide="pencil" class="w-5 h-5"></i></button>
+                            <button onclick="prepararEdicao(${pai.id}, '${pai.nome}', ${pai.visivel})" class="text-blue-400 hover:bg-blue-500/10 p-2 rounded-lg"><i data-lucide="pencil" class="w-5 h-5"></i></button>
                             <button onclick="deletarCategoria(${pai.id})" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                         </div>
                     </div>
@@ -106,6 +114,39 @@
             
             lucide.createIcons();
             ativarDragAndDrop();
+        }
+
+        document.getElementById('form-pai').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('pai-id').value;
+            const nome = document.getElementById('nome-pai').value.trim();
+            const visivel = document.getElementById('visivel-pai').checked; // Lê a caixinha
+            
+            let requisicao;
+            if (id) {
+                // Agora manda o 'visivel' para o banco
+                requisicao = await supabaseClient.from('categorias').update({ nome, parent_id: null, visivel }).eq('id', id);
+            } else {
+                const novaOrdem = categoriasLocais.length; 
+                requisicao = await supabaseClient.from('categorias').insert([{ nome, ordem: novaOrdem, parent_id: null, visivel }]);
+            }
+
+            if (requisicao.error) alert("Erro: " + requisicao.error.message);
+            else { resetarPai(); carregarCategorias(); }
+        });
+
+        // Recebe o terceiro parâmetro 'visivel'
+        function prepararEdicao(id, nome, visivel) {
+            document.getElementById('pai-id').value = id;
+            document.getElementById('nome-pai').value = nome;
+            // Se visivel for estritamente false, desmarca a caixa. Senão, marca.
+            document.getElementById('visivel-pai').checked = visivel !== false; 
+            
+            document.getElementById('titulo-form-pai').innerText = "Editando Categoria";
+            document.getElementById('btn-submit-pai').innerText = "Atualizar";
+            document.getElementById('btn-cancelar-pai').classList.remove('hidden');
+            document.getElementById('btn-submit-pai').classList.replace('bg-[#a3e635]', 'bg-blue-500');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function ativarDragAndDrop() {

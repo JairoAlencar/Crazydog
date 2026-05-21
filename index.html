@@ -378,7 +378,12 @@
             // 👑 A REGRA DE OURO: O Pente Fino!
             // Só deixa passar as categorias que têm pelo menos 1 lanche cadastrado com o mesmo nome
             const categoriasComItens = resCat.data.filter(cat => {
+                // 1. SE A CHAVINHA NO PAINEL ESTIVER DESLIGADA, CORTA NA HORA!
+                if (cat.visivel === false) return false;
+
                 const nomeCatLimpo = cat.nome.trim().toUpperCase();
+                
+                // 2. Só deixa passar as categorias que têm pelo menos 1 lanche cadastrado
                 return LANCHES.some(l => (l.categoria || '').trim().toUpperCase() === nomeCatLimpo);
             });
 

@@ -109,15 +109,18 @@
 
         const form = document.getElementById('form-produto');
         let lanches = [];
+        let listaDeCategoriasGlobal = []; // Nova variável de memória
 
         async function carregarLanchesDoBanco() {
-            const { data, error } = await supabaseClient
-                .from('lanches')
-                .select('*')
-                .order('ordem', { ascending: true });
+            // Busca Lanches E Categorias ao mesmo tempo do Supabase
+            const [resLan, resCat] = await Promise.all([
+                supabaseClient.from('lanches').select('*').order('ordem', { ascending: true }),
+                supabaseClient.from('categorias').select('*').order('ordem', { ascending: true })
+            ]);
             
-            if (!error) {
-                lanches = data;
+            if (!resLan.error && !resCat.error) {
+                lanches = resLan.data;
+                listaDeCategoriasGlobal = resCat.data.map(c => c.nome);
                 renderCategoriasAdmin();
             }
         }
@@ -196,20 +199,28 @@
 
         function renderCategoriasAdmin() {
             const container = document.getElementById('categorias-container');
-            const categorias = ['Lanche', 'Doce', 'Bebida', 'Adicional']; // Pode alterar conforme necessário
+            
+            // A MÁGICA: Em vez de texto fixo, ele puxa todas as categorias do banco
+            // e junta com as dos lanches (caso tenha algum lanche com categoria antiga)
+            const categoriasDosLanches = lanches.map(l => l.categoria);
+            const categorias = [...new Set([...listaDeCategoriasGlobal, ...categoriasDosLanches])].filter(Boolean);
+
             container.innerHTML = '';
 
             categorias.forEach(cat => {
                 const itens = lanches.filter(l => l.categoria === cat);
                 
+                // Cria um ID seguro sem espaços para a lista não dar erro no arrastar (ex: Hot Dog -> lista-HotDog)
+                const idListaSeguro = "lista-" + cat.replace(/[^a-zA-Z0-9]/g, ''); 
+                
                 const section = document.createElement('div');
                 
                 let htmlContent = `
-                    <div class="flex items-center gap-2 mb-4 border-b border-gray-700 pb-2">
+                    <div class="flex items-center gap-2 mb-4 border-b border-gray-700 pb-2 mt-10">
                         <i data-lucide="layers" class="text-[#a3e635] w-4 h-4"></i>
-                        <h3 class="text-sm font-black uppercase tracking-widest text-gray-400">${cat}</h3>
+                        <h3 class="text-sm font-black uppercase tracking-widest text-[#f48c2e]">${cat}</h3>
                     </div>
-                    <div id="lista-${cat}" class="space-y-2">
+                    <div id="${idListaSeguro}" class="space-y-2 min-h-[60px] bg-[#1a1d23]/30 rounded-xl p-3 border border-dashed border-gray-700/50">
                 `;
 
                 htmlContent += itens.map(item => {
@@ -258,7 +269,8 @@
                 section.innerHTML = htmlContent;
                 container.appendChild(section);
 
-                new Sortable(document.getElementById(`lista-${cat}`), {
+                // Ativa o arrastar e soltar (SortableJS) com o ID seguro
+                new Sortable(document.getElementById(idListaSeguro), {
                     animation: 150,
                     handle: '.drag-handle',
                     ghostClass: 'sortable-ghost',
